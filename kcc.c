@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
+#define PLUS '+'
+#define MINUS '-'
 typedef enum {
     TOKEN_RESERVED,
     TOKEN_NUMBER,
@@ -19,6 +21,21 @@ struct Token {
 };
 
 Token *token;
+typedef enum {
+    NODE_ADD,
+    NODE_SUB,
+    NODE_VAL,
+} NodeType;
+
+typedef struct Node Node;
+struct Node {
+    NodeType type;
+    Node *lhs;
+    Node *rhs;
+    int value;
+};
+
+Node *top_node;
 
 void error(char *fmt, ...) {
     va_list ap;
@@ -90,7 +107,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == '+' || *p == '-') {
+        if (*p == PLUS || *p == MINUS) {
             current = new_token(TOKEN_RESERVED, current, p);
             p++;
             continue;
@@ -109,14 +126,91 @@ Token *tokenize(char *p) {
     return head.next;
 }
 
-int main(int argc, char **argv) {
-    if (argc != 2) {
-        error("only 2 argument is acceptable\n");
+void show_tokens(Token *head) {
+    fprintf(stderr, "========tokens start=======\n");
+    for (Token *tok = head; tok->type != TOKEN_EOF; tok = tok->next) {
+        fprintf(stderr, "_%c_ ", tok->str[0]);
     }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "========tokens end=========\n");
+}
 
-    user_input = argv[1];
-    token = tokenize(user_input);
+Node *init_node() {
+    Node *node = calloc(1, sizeof(Node));
+    node->lhs = NULL;
+    node->rhs = NULL;
+    return node;
+}
 
+Node *new_node(NodeType type, Node *lhs, Node *rhs) {
+    Node *node = init_node();
+    node->type = type;
+    node->lhs = lhs;
+    node->rhs = rhs;
+    return node;
+}
+
+Node *new_node_number(int number) {
+    Node *node = init_node();
+    node->type = NODE_VAL;
+    node->value = number;
+    return node;
+}
+
+
+Node *primary() {
+    return new_node_number(expect_number());
+}
+
+Node *additive() {
+    Node *lhs = primary();
+    while (true) {
+        if (consume_reserved(PLUS)) {
+            lhs = new_node(NODE_ADD, lhs, additive());
+            continue;
+        }
+        if (consume_reserved(MINUS)) {
+            lhs = new_node(NODE_SUB, lhs, additive());
+            continue;
+        }
+        return lhs;
+    }
+}
+
+Node *expression() {
+    return additive();
+}
+
+void generate(Node *node) {
+    if (node == NULL) {
+        return;
+    }
+    generate(node->lhs);
+    generate(node->rhs);
+
+    switch (node->type) {
+        case NODE_VAL: {
+            printf("  push %d\n", node->value);
+            return;
+        }
+        case NODE_ADD: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  add rax, rdi\n");
+            printf("  push rax\n");
+            return;
+        }
+        case NODE_SUB: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  sub rax, rdi\n");
+            printf("  push rax\n");
+            return;
+        }
+    }
+}
+
+void generate_assembly(Node *top_node) {
     // prologue
     printf(".intel_syntax noprefix\n");
     printf(".section	__TEXT,__text,regular,pure_instructions\n");
@@ -124,19 +218,26 @@ int main(int argc, char **argv) {
     printf(".globl	_main\n");
     printf("_main:\n");
     // main
-    printf("  mov rax, %d\n", expect_number());
-
-    while (!is_at_eof()) {
-        if (consume_reserved('+')) {
-            printf("  add rax, %d\n", expect_number());
-            continue;
-        }
-        if (consume_reserved('-')) {
-            printf("  sub rax, %d\n", expect_number());
-            continue;
-        }
-    }
-    
+    generate(top_node);
+    printf("  pop rax\n");
     printf("  ret\n");
+}
+
+int main(int argc, char **argv) {
+    int input_index = 1;
+    bool show_debug_info = false;
+    if (argc == 3) {
+        show_debug_info = true;
+        input_index++;
+    }
+
+    user_input = argv[1];
+    token = tokenize(user_input);
+    if (show_debug_info) {
+        show_tokens(token);
+    }
+    top_node = expression();
+    generate_assembly(top_node);
+    
     return 0;
 }

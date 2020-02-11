@@ -21,5 +21,7 @@ try 43 43
 echo "single value OK"
 try 5 '2+3'
 echo "addition OK"
+try 4 '10-6'
+echo "subtraction OK"
 
 echo OK

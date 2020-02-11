@@ -2,3 +2,6 @@
 experiments/*
 tmp*
 kcc
+kcc.dSYM
+kcc.dSYM/*
+c_cpp_properties.json

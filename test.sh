@@ -19,5 +19,7 @@ try() {
 try 0 0
 try 43 43
 echo "single value OK"
+try 5 '2+3'
+echo "addition OK"
 
 echo OK

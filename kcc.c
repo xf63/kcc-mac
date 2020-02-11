@@ -1,11 +1,106 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <stdarg.h>
+
+typedef enum {
+    TOKEN_RESERVED,
+    TOKEN_NUMBER,
+    TOKEN_EOF,
+} TokenType;
+
+typedef struct Token Token;
+
+struct Token {
+    TokenType type;
+    Token *next;
+    int val;
+    char *str;
+};
+
+Token *token;
+
+void error(char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
+bool consume_reserved(char operator) {
+    if (token->type != TOKEN_RESERVED || token->str[0] != operator) {
+        return false;
+    }
+    token = token->next;
+    return true;
+}
+
+void expect(char operator) {
+    if (token->type != TOKEN_RESERVED || token->str[0] != operator) {
+        error("%c is expected", operator);
+    }
+    token = token->next;
+}
+
+int expect_number() {
+    if (token->type != TOKEN_NUMBER) {
+        error("number is expected");
+    }
+    int value = token->val;
+    token = token->next;
+    return value;
+}
+
+bool is_at_eof() {
+    return token->type == TOKEN_EOF;
+}
+
+Token *new_token(TokenType type, Token *current, char *str) {
+    Token *token = calloc(1, sizeof(Token));
+    token->type = type;
+    token->str = str;
+    current->next = token;
+    return token;
+}
+
+Token *tokenize(char *p) {
+    Token head;
+    head.next = NULL;
+    Token *current = &head;
+
+    while (*p) {
+        if (*p == ' ') {
+            p++;
+            continue;
+        }
+
+        if (*p == '+' || *p == '-') {
+            current = new_token(TOKEN_RESERVED, current, p);
+            p++;
+            continue;
+        }
+
+        if ('0' <= *p && *p <= '9') {
+            current = new_token(TOKEN_NUMBER, current, p);
+            current->val = strtol(p, &p, 10);
+            continue;
+        }
+
+        error("unexpected character: %c\n", *p);
+    }
+
+    new_token(TOKEN_EOF, current, p);
+    return head.next;
+}
 
 int main(int argc, char **argv) {
     if (argc != 2) {
         fprintf(stderr, "only 2 argument is acceptable\n");
         return 1;
     }
+
+    token = tokenize(argv[1]);
 
     // prologue
     printf(".intel_syntax noprefix\n");
@@ -14,24 +109,17 @@ int main(int argc, char **argv) {
     printf(".globl	_main\n");
     printf("_main:\n");
     // main
-    char *p = argv[1];
-    printf("  mov rax, %ld\n", strtol(p, &p, 10));
+    printf("  mov rax, %d\n", expect_number());
 
-    while (*p) {
-        if (*p == '+') {
-            p++;
-            printf("  add rax, %ld\n", strtol(p, &p, 10));
+    while (!is_at_eof()) {
+        if (consume_reserved('+')) {
+            printf("  add rax, %d\n", expect_number());
             continue;
         }
-
-        if (*p == '-') {
-            p++;
-            printf("  sub rax, %ld\n", strtol(p, &p, 10));
+        if (consume_reserved('-')) {
+            printf("  sub rax, %d\n", expect_number());
             continue;
         }
-
-        fprintf(stderr, "unexpected character: %c\n", *p);
-        return 1;
     }
     
     printf("  ret\n");

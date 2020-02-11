@@ -28,6 +28,21 @@ void error(char *fmt, ...) {
     exit(1);
 }
 
+char *user_input;
+
+void error_at(char *loc, char *fmt, ...) {
+    int error_position = loc - user_input; //when loc is pointer to the specific location of code, position is available by subtraction.
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", error_position, "");
+    fprintf(stderr, "^ ");
+
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
 bool consume_reserved(char operator) {
     if (token->type != TOKEN_RESERVED || token->str[0] != operator) {
         return false;
@@ -38,14 +53,14 @@ bool consume_reserved(char operator) {
 
 void expect(char operator) {
     if (token->type != TOKEN_RESERVED || token->str[0] != operator) {
-        error("%c is expected", operator);
+        error_at(token->str, "%c is expected", operator);
     }
     token = token->next;
 }
 
 int expect_number() {
     if (token->type != TOKEN_NUMBER) {
-        error("number is expected");
+        error_at(token->str, "number is expected");
     }
     int value = token->val;
     token = token->next;
@@ -87,7 +102,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        error("unexpected character: %c\n", *p);
+        error_at(p, "unexpected character: %c\n", *p);
     }
 
     new_token(TOKEN_EOF, current, p);
@@ -96,11 +111,11 @@ Token *tokenize(char *p) {
 
 int main(int argc, char **argv) {
     if (argc != 2) {
-        fprintf(stderr, "only 2 argument is acceptable\n");
-        return 1;
+        error("only 2 argument is acceptable\n");
     }
 
-    token = tokenize(argv[1]);
+    user_input = argv[1];
+    token = tokenize(user_input);
 
     // prologue
     printf(".intel_syntax noprefix\n");

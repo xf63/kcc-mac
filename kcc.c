@@ -6,7 +6,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "only 2 argument is acceptable\n");
         return 1;
     }
-    
+
     // prologue
     printf(".intel_syntax noprefix\n");
     printf(".section	__TEXT,__text,regular,pure_instructions\n");

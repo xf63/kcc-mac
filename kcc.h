@@ -14,6 +14,8 @@
 #define NOT_EQUAL "!="
 #define GREATER_THAN ">"
 #define GREATER_EQUAL ">="
+#define LESS_THAN "<"
+#define LESS_EQUAL "<="
 
 typedef enum {
     TOKEN_RESERVED,
@@ -42,6 +44,8 @@ typedef enum {
     NODE_NOT_EQUAL,
     NODE_GREATER_THAN,
     NODE_GREATER_EQUAL,
+    NODE_LESS_THAN,
+    NODE_LESS_EQUAL,
 } NodeType;
 
 typedef struct Node Node;

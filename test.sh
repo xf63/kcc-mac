@@ -42,6 +42,8 @@ try 1 "5!=3+3"
 echo "equality OK"
 try 1 '10 > 3 * 3'
 try 0 '14 >= 3 * 5'
+try 0 '9 < 3 * 3'
+try 1 '7 <= 2 * 4'
 echo "relational OK"
 
 echo OK

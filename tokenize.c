@@ -45,7 +45,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (prefix_match(p, EQUAL) || prefix_match(p, NOT_EQUAL) || prefix_match(p, GREATER_EQUAL)) {
+        if (prefix_match(p, EQUAL) || prefix_match(p, NOT_EQUAL) || prefix_match(p, GREATER_EQUAL) || prefix_match(p, LESS_EQUAL)) {
             current = new_token(TOKEN_RESERVED, current, p, 2);
             p = p + 2;
             continue;
@@ -53,7 +53,7 @@ Token *tokenize(char *p) {
 
         if (prefix_match(p, PLUS) || prefix_match(p, MINUS) || prefix_match(p, TIMES) || prefix_match(p, DIVIDE)
         || prefix_match(p, PARENTHESES_START) || prefix_match(p, PARENTHESES_END)
-        || prefix_match(p, GREATER_THAN)) {
+        || prefix_match(p, GREATER_THAN) || prefix_match(p, LESS_THAN)) {
             current = new_token(TOKEN_RESERVED, current, p, 1);
             p++;
             continue;

@@ -77,6 +77,24 @@ void generate(Node *node) {
             printf("  push rax\n");
             return;
         }
+        case NODE_LESS_THAN: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  cmp rax, rdi\n");
+            printf("  setl al\n");
+            printf("  movzx rax, al\n");
+            printf("  push rax\n");
+            return;
+        }
+        case NODE_LESS_EQUAL: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  cmp rax, rdi\n");
+            printf("  setle al\n");
+            printf("  movzx rax, al\n");
+            printf("  push rax\n");
+            return;
+        }
     }
 }
 
@@ -126,6 +144,22 @@ char *node2str(Node *node) {
         }
         case NODE_NOT_EQUAL: {
             strcpy(nodestr, "(!=)");
+            return nodestr;
+        }
+        case NODE_GREATER_THAN: {
+            strcpy(nodestr, "(>)");
+            return nodestr;
+        }
+        case NODE_GREATER_EQUAL: {
+            strcpy(nodestr, "(>=)");
+            return nodestr;
+        }
+        case NODE_LESS_THAN: {
+            strcpy(nodestr, "(<)");
+            return nodestr;
+        }
+        case NODE_LESS_EQUAL: {
+            strcpy(nodestr, "(<=)");
             return nodestr;
         }
         default: {

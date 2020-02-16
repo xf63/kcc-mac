@@ -117,17 +117,25 @@ Node *additive() {
 }
 
 /**
- * relational = additive (">" additive | ">=" additive)*
+ * relational = additive (">" additive | ">=" additive | "<" additive | "<=" additive)*
 **/
 Node *relational() {
     Node *lhs = additive();
     while (true) {
+        if (consume_reserved(GREATER_THAN)) {
+            lhs = new_node(NODE_GREATER_THAN, lhs, additive());
+            continue;
+        }
         if (consume_reserved(GREATER_EQUAL)) {
             lhs = new_node(NODE_GREATER_EQUAL, lhs, additive());
             continue;
         }
-        if (consume_reserved(GREATER_THAN)) {
-            lhs = new_node(NODE_GREATER_THAN, lhs, additive());
+        if (consume_reserved(LESS_THAN)) {
+            lhs = new_node(NODE_LESS_THAN, lhs, additive());
+            continue;
+        }
+        if (consume_reserved(LESS_EQUAL)) {
+            lhs = new_node(NODE_LESS_EQUAL, lhs, additive());
             continue;
         }
         return lhs;

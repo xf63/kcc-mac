@@ -30,5 +30,7 @@ echo "multiplication OK"
 try 10 '5 * 4 / 2'
 try 13 '20 - 14 / 2'
 echo "division OK"
+try 12 '6 * (4 - 2)'
+echo "parentheses OK"
 
 echo OK

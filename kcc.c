@@ -7,6 +7,8 @@
 #define MINUS '-'
 #define TIMES '*'
 #define DIVIDE '/'
+#define PARENTHESES_START '('
+#define PARENTHESES_END ')'
 typedef enum {
     TOKEN_RESERVED,
     TOKEN_NUMBER,
@@ -111,7 +113,8 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == PLUS || *p == MINUS || *p == TIMES || *p == DIVIDE) {
+        if (*p == PLUS || *p == MINUS || *p == TIMES || *p == DIVIDE ||
+        *p == PARENTHESES_START || *p == PARENTHESES_END) {
             current = new_token(TOKEN_RESERVED, current, p);
             p++;
             continue;
@@ -161,10 +164,17 @@ Node *new_node_number(int number) {
     return node;
 }
 
+Node *expression();
+
 /**
- * primary = [0-9]*
+ * primary = [0-9]* | "(" expression ")"
 **/
 Node *primary() {
+    if (consume_reserved(PARENTHESES_START)) {
+        Node *inside_parentheses = expression();
+        expect(PARENTHESES_END);
+        return inside_parentheses;
+    }
     return new_node_number(expect_number());
 }
 
@@ -265,8 +275,28 @@ char *node2str(Node *node) {
         sprintf(nodestr, "val: %d", node->value);
         return nodestr;
     }
-    sprintf(nodestr, "type: %d", node->type);
-    return nodestr;
+    switch (node->type) {
+        case NODE_ADD: {
+            sprintf(nodestr, "(+)", node->type);
+            return nodestr;
+        }
+        case NODE_SUB: {
+            sprintf(nodestr, "(-)", node->type);
+            return nodestr;
+        }
+        case NODE_MUL: {
+            sprintf(nodestr, "(*)", node->type);
+            return nodestr;
+        }
+        case NODE_DIV: {
+            sprintf(nodestr, "(/)", node->type);
+            return nodestr;
+        }
+        default: {
+            sprintf(nodestr, "type: %d", node->type);
+            return nodestr;
+        }
+    }
 }
 
 void show_children(Node *node, int depth) {

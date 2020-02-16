@@ -27,5 +27,8 @@ echo "subtraction OK"
 try 40 '5 * 4 * 2'
 try 16 '20 - 2 * 2'
 echo "multiplication OK"
+try 10 '5 * 4 / 2'
+try 13 '20 - 14 / 2'
+echo "division OK"
 
 echo OK

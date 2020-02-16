@@ -6,6 +6,7 @@
 #define PLUS '+'
 #define MINUS '-'
 #define TIMES '*'
+#define DIVIDE '/'
 typedef enum {
     TOKEN_RESERVED,
     TOKEN_NUMBER,
@@ -26,6 +27,7 @@ typedef enum {
     NODE_ADD,
     NODE_SUB,
     NODE_MUL,
+    NODE_DIV,
     NODE_VAL,
 } NodeType;
 
@@ -109,7 +111,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == PLUS || *p == MINUS || *p == TIMES) {
+        if (*p == PLUS || *p == MINUS || *p == TIMES || *p == DIVIDE) {
             current = new_token(TOKEN_RESERVED, current, p);
             p++;
             continue;
@@ -167,13 +169,17 @@ Node *primary() {
 }
 
 /**
- * multiplicative = primary ("*" primary)*
+ * multiplicative = primary ("*" primary | "/" primary)*
 **/
 Node *multiplicative() {
     Node *lhs = primary();
     while (true) {
         if (consume_reserved(TIMES)) {
             lhs = new_node(NODE_MUL, lhs, primary());
+            continue;
+        }
+        if (consume_reserved(DIVIDE)) {
+            lhs = new_node(NODE_DIV, lhs, primary());
             continue;
         }
         return lhs;
@@ -234,6 +240,14 @@ void generate(Node *node) {
             printf("  pop rdi\n");
             printf("  pop rax\n");
             printf("  mul rdi\n");
+            printf("  push rax\n");
+            return;
+        }
+        case NODE_DIV: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  cqo\n");
+            printf("  idiv rdi\n");
             printf("  push rax\n");
             return;
         }

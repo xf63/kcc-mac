@@ -5,6 +5,7 @@
 
 #define PLUS '+'
 #define MINUS '-'
+#define TIMES '*'
 typedef enum {
     TOKEN_RESERVED,
     TOKEN_NUMBER,
@@ -24,6 +25,7 @@ Token *token;
 typedef enum {
     NODE_ADD,
     NODE_SUB,
+    NODE_MUL,
     NODE_VAL,
 } NodeType;
 
@@ -107,7 +109,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == PLUS || *p == MINUS) {
+        if (*p == PLUS || *p == MINUS || *p == TIMES) {
             current = new_token(TOKEN_RESERVED, current, p);
             p++;
             continue;
@@ -157,25 +159,46 @@ Node *new_node_number(int number) {
     return node;
 }
 
-
+/**
+ * primary = [0-9]*
+**/
 Node *primary() {
     return new_node_number(expect_number());
 }
 
-Node *additive() {
+/**
+ * multiplicative = primary ("*" primary)*
+**/
+Node *multiplicative() {
     Node *lhs = primary();
     while (true) {
+        if (consume_reserved(TIMES)) {
+            lhs = new_node(NODE_MUL, lhs, primary());
+            continue;
+        }
+        return lhs;
+    }
+    
+}
+
+/**
+ * additive = multiplicative ("+" multiplicative | "-" multiplicative)*
+**/
+Node *additive() {
+    Node *lhs = multiplicative();
+    while (true) {
         if (consume_reserved(PLUS)) {
-            lhs = new_node(NODE_ADD, lhs, additive());
+            lhs = new_node(NODE_ADD, lhs, multiplicative());
             continue;
         }
         if (consume_reserved(MINUS)) {
-            lhs = new_node(NODE_SUB, lhs, additive());
+            lhs = new_node(NODE_SUB, lhs, multiplicative());
             continue;
         }
         return lhs;
     }
 }
+
 
 Node *expression() {
     return additive();
@@ -207,7 +230,48 @@ void generate(Node *node) {
             printf("  push rax\n");
             return;
         }
+        case NODE_MUL: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  mul rdi\n");
+            printf("  push rax\n");
+            return;
+        }
     }
+}
+
+
+char nodestr[100];
+
+char *node2str(Node *node) {
+    if (node == NULL) {
+        return "NULL";
+    }
+    if (node->type == NODE_VAL) {
+        sprintf(nodestr, "val: %d", node->value);
+        return nodestr;
+    }
+    sprintf(nodestr, "type: %d", node->type);
+    return nodestr;
+}
+
+void show_children(Node *node, int depth) {
+    if (node == NULL) return;
+    fprintf(stderr, "%s\n", node2str(node));
+    fprintf(stderr, "%*s", (depth + 1) * 2, "");
+    fprintf(stderr, "left : ");
+    show_children(node->lhs, depth + 1);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "%*s", (depth + 1) * 2, "");
+    fprintf(stderr, "right: ");
+    show_children(node->rhs, depth + 1);
+    fprintf(stderr, "\n");
+}
+
+void show_node_tree(Node *top_node) {
+    fprintf(stderr, "========node tree========\n");
+    show_children(top_node, 0);
+    fprintf(stderr, "=========================\n");
 }
 
 void generate_assembly(Node *top_node) {
@@ -231,12 +295,15 @@ int main(int argc, char **argv) {
         input_index++;
     }
 
-    user_input = argv[1];
+    user_input = argv[input_index];
     token = tokenize(user_input);
     if (show_debug_info) {
         show_tokens(token);
     }
     top_node = expression();
+    if (show_debug_info) {
+        show_node_tree(top_node);
+    }
     generate_assembly(top_node);
     
     return 0;

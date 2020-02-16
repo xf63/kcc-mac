@@ -48,10 +48,32 @@ void generate(Node *node) {
             printf("  sete al\n");
             printf("  movzx rax, al\n");
             printf("  push rax\n");
+            return;
+        }
+        case NODE_NOT_EQUAL: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  cmp rax, rdi\n");
+            printf("  setne al\n");
+            printf("  movzx rax, al\n");
+            printf("  push rax\n");
+            return;
         }
     }
 }
 
+void generate_assembly(Node *top_node) {
+    // prologue
+    printf(".intel_syntax noprefix\n");
+    printf(".section	__TEXT,__text,regular,pure_instructions\n");
+    printf(".macosx_version_min 10, 10\n");
+    printf(".globl	_main\n");
+    printf("_main:\n");
+    // main
+    generate(top_node);
+    printf("  pop rax\n");
+    printf("  ret\n");
+}
 
 char nodestr[100];
 
@@ -84,6 +106,10 @@ char *node2str(Node *node) {
             strcpy(nodestr, "(==)");
             return nodestr;
         }
+        case NODE_NOT_EQUAL: {
+            strcpy(nodestr, "(!=)");
+            return nodestr;
+        }
         default: {
             sprintf(nodestr, "type: %d", node->type);
             return nodestr;
@@ -91,18 +117,6 @@ char *node2str(Node *node) {
     }
 }
 
-void generate_assembly(Node *top_node) {
-    // prologue
-    printf(".intel_syntax noprefix\n");
-    printf(".section	__TEXT,__text,regular,pure_instructions\n");
-    printf(".macosx_version_min 10, 10\n");
-    printf(".globl	_main\n");
-    printf("_main:\n");
-    // main
-    generate(top_node);
-    printf("  pop rax\n");
-    printf("  ret\n");
-}
 
 void show_children(Node *node, int depth) {
     if (node == NULL) {

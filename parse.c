@@ -117,13 +117,17 @@ Node *additive() {
 }
 
 /**
- * equality = additive ("==" additive)*
+ * equality = additive ("==" additive | "!=" additive)*
 **/
 Node *equality() {
     Node *lhs = additive();
     while (true) {
         if (consume_reserved(EQUAL)) {
             lhs = new_node(NODE_EQUAL, lhs, additive());
+            continue;
+        }
+        if (consume_reserved(NOT_EQUAL)) {
+            lhs = new_node(NODE_NOT_EQUAL, lhs, additive());
             continue;
         }
         return lhs;

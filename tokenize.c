@@ -45,7 +45,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (prefix_match(p, EQUAL)) {
+        if (prefix_match(p, EQUAL) || prefix_match(p, NOT_EQUAL)) {
             current = new_token(TOKEN_RESERVED, current, p, 2);
             p = p + 2;
             continue;

@@ -116,7 +116,20 @@ Node *additive() {
     }
 }
 
+/**
+ * equality = additive ("==" additive)*
+**/
+Node *equality() {
+    Node *lhs = additive();
+    while (true) {
+        if (consume_reserved(EQUAL)) {
+            lhs = new_node(NODE_EQUAL, lhs, additive());
+            continue;
+        }
+        return lhs;
+    }
+}
 
 Node *expression() {
-    return additive();
+    return equality();
 }

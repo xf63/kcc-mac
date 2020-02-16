@@ -29,11 +29,12 @@ struct Token {
 
 Token *token;
 typedef enum {
+    NODE_VAL,
     NODE_ADD,
     NODE_SUB,
     NODE_MUL,
     NODE_DIV,
-    NODE_VAL,
+    NODE_EQUAL,
 } NodeType;
 
 typedef struct Node Node;

@@ -35,5 +35,8 @@ echo "parentheses OK"
 try 11 '-9 + 20'
 try 5 '+5'
 echo "unary OK"
+try 1 "5==2+3"
+try 0 "5==3+3"
+echo "equality OK"
 
 echo OK

@@ -80,6 +80,7 @@ void show_tokens(Token *head) {
         else {
             char output[10];
             strncpy(output, tok->str, tok->len);
+            output[tok->len] = '\0';
             fprintf(stderr, "%s ", output);
         }
     }

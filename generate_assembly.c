@@ -59,6 +59,24 @@ void generate(Node *node) {
             printf("  push rax\n");
             return;
         }
+        case NODE_GREATER_THAN: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  cmp rax, rdi\n");
+            printf("  setg al\n");
+            printf("  movzx rax, al\n");
+            printf("  push rax\n");
+            return;
+        }
+        case NODE_GREATER_EQUAL: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  cmp rax, rdi\n");
+            printf("  setge al\n");
+            printf("  movzx rax, al\n");
+            printf("  push rax\n");
+            return;
+        }
     }
 }
 

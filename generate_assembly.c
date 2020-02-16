@@ -79,6 +79,19 @@ char *node2str(Node *node) {
     }
 }
 
+void generate_assembly(Node *top_node) {
+    // prologue
+    printf(".intel_syntax noprefix\n");
+    printf(".section	__TEXT,__text,regular,pure_instructions\n");
+    printf(".macosx_version_min 10, 10\n");
+    printf(".globl	_main\n");
+    printf("_main:\n");
+    // main
+    generate(top_node);
+    printf("  pop rax\n");
+    printf("  ret\n");
+}
+
 void show_children(Node *node, int depth) {
     if (node == NULL) {
         fprintf(stderr, "NULL");
@@ -99,17 +112,4 @@ void show_node_tree(Node *top_node) {
     show_children(top_node, 0);
     fprintf(stderr, "\n");
     fprintf(stderr, "=========================\n");
-}
-
-void generate_assembly(Node *top_node) {
-    // prologue
-    printf(".intel_syntax noprefix\n");
-    printf(".section	__TEXT,__text,regular,pure_instructions\n");
-    printf(".macosx_version_min 10, 10\n");
-    printf(".globl	_main\n");
-    printf("_main:\n");
-    // main
-    generate(top_node);
-    printf("  pop rax\n");
-    printf("  ret\n");
 }

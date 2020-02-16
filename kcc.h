@@ -4,12 +4,12 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define PLUS '+'
-#define MINUS '-'
-#define TIMES '*'
-#define DIVIDE '/'
-#define PARENTHESES_START '('
-#define PARENTHESES_END ')'
+#define PLUS "+"
+#define MINUS "-"
+#define TIMES "*"
+#define DIVIDE "/"
+#define PARENTHESES_START "("
+#define PARENTHESES_END ")"
 typedef enum {
     TOKEN_RESERVED,
     TOKEN_NUMBER,
@@ -23,6 +23,7 @@ struct Token {
     Token *next;
     int val;
     char *str;
+    int len;
 };
 
 Token *token;

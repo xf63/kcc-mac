@@ -1,15 +1,17 @@
 #include "kcc.h"
 
-bool consume_reserved(char operator) {
-    if (token->type != TOKEN_RESERVED || token->str[0] != operator) {
+bool consume_reserved(char *operator) {
+    if (token->type != TOKEN_RESERVED || strlen(operator) != token->len
+    || memcmp(token->str, operator, token->len) != 0) {
         return false;
     }
     token = token->next;
     return true;
 }
 
-void expect(char operator) {
-    if (token->type != TOKEN_RESERVED || token->str[0] != operator) {
+void expect(char *operator) {
+    if (token->type != TOKEN_RESERVED || strlen(operator) != token->len
+    || memcmp(token->str, operator, token->len) != 0) {
         error_at(token->str, "%c is expected", operator);
     }
     token = token->next;
@@ -65,17 +67,30 @@ Node *primary() {
 }
 
 /**
- * multiplicative = primary ("*" primary | "/" primary)*
+ * unary = ("+" | "-")? primary
+**/
+Node *unary() {
+    if (consume_reserved(PLUS)) {
+        return primary();
+    }
+    if (consume_reserved(MINUS)) {
+        return new_node(NODE_SUB, new_node_number(0), primary());
+    }
+    return primary();
+}
+
+/**
+ * multiplicative = unary ("*" unary | "/" unary)*
 **/
 Node *multiplicative() {
-    Node *lhs = primary();
+    Node *lhs = unary();
     while (true) {
         if (consume_reserved(TIMES)) {
-            lhs = new_node(NODE_MUL, lhs, primary());
+            lhs = new_node(NODE_MUL, lhs, unary());
             continue;
         }
         if (consume_reserved(DIVIDE)) {
-            lhs = new_node(NODE_DIV, lhs, primary());
+            lhs = new_node(NODE_DIV, lhs, unary());
             continue;
         }
         return lhs;

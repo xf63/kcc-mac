@@ -21,12 +21,17 @@ void error_at(char *loc, char *fmt, ...) {
     exit(1);
 }
 
-Token *new_token(TokenType type, Token *current, char *str) {
+Token *new_token(TokenType type, Token *current, char *str, int len) {
     Token *token = calloc(1, sizeof(Token));
     token->type = type;
     token->str = str;
+    token->len = len;
     current->next = token;
     return token;
+}
+
+bool prefix_match(char *target, char *pattern) {
+    return memcmp(target, pattern, strlen(pattern)) == 0;
 }
 
 Token *tokenize(char *p) {
@@ -40,15 +45,15 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == PLUS || *p == MINUS || *p == TIMES || *p == DIVIDE ||
-        *p == PARENTHESES_START || *p == PARENTHESES_END) {
-            current = new_token(TOKEN_RESERVED, current, p);
+        if (prefix_match(p, PLUS) || prefix_match(p, MINUS) || prefix_match(p, TIMES) || prefix_match(p, DIVIDE)
+        || prefix_match(p, PARENTHESES_START) || prefix_match(p, PARENTHESES_END)) {
+            current = new_token(TOKEN_RESERVED, current, p, 1);
             p++;
             continue;
         }
 
         if ('0' <= *p && *p <= '9') {
-            current = new_token(TOKEN_NUMBER, current, p);
+            current = new_token(TOKEN_NUMBER, current, p, -1);
             current->val = strtol(p, &p, 10);
             continue;
         }
@@ -56,7 +61,7 @@ Token *tokenize(char *p) {
         error_at(p, "unexpected character: %c\n", *p);
     }
 
-    new_token(TOKEN_EOF, current, p);
+    new_token(TOKEN_EOF, current, p, -1);
     return head.next;
 }
 

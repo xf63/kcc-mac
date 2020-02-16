@@ -32,5 +32,8 @@ try 13 '20 - 14 / 2'
 echo "division OK"
 try 12 '6 * (4 - 2)'
 echo "parentheses OK"
+try 11 '-9 + 20'
+try 5 '+5'
+echo "unary OK"
 
 echo OK

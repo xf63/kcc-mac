@@ -10,6 +10,7 @@
 #define DIVIDE "/"
 #define PARENTHESES_START "("
 #define PARENTHESES_END ")"
+#define EQUAL "=="
 typedef enum {
     TOKEN_RESERVED,
     TOKEN_NUMBER,

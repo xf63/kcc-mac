@@ -45,6 +45,12 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (prefix_match(p, EQUAL)) {
+            current = new_token(TOKEN_RESERVED, current, p, 2);
+            p = p + 2;
+            continue;
+        }
+
         if (prefix_match(p, PLUS) || prefix_match(p, MINUS) || prefix_match(p, TIMES) || prefix_match(p, DIVIDE)
         || prefix_match(p, PARENTHESES_START) || prefix_match(p, PARENTHESES_END)) {
             current = new_token(TOKEN_RESERVED, current, p, 1);
@@ -68,7 +74,14 @@ Token *tokenize(char *p) {
 void show_tokens(Token *head) {
     fprintf(stderr, "========tokens start=======\n");
     for (Token *tok = head; tok->type != TOKEN_EOF; tok = tok->next) {
-        fprintf(stderr, "_%c_ ", tok->str[0]);
+        if (tok->type == TOKEN_NUMBER) {
+            fprintf(stderr, "%d ", tok->val);
+        }
+        else {
+            char output[10];
+            strncpy(output, tok->str, tok->len);
+            fprintf(stderr, "%s ", output);
+        }
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "========tokens end=========\n");

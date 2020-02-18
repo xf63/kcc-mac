@@ -12,7 +12,7 @@ bool consume_reserved(char *operator) {
 void expect(char *operator) {
     if (token->type != TOKEN_RESERVED || strlen(operator) != token->len
     || memcmp(token->str, operator, token->len) != 0) {
-        error_at(token->str, "%c is expected", operator);
+        error_at(token->str, "%s is expected", operator);
     }
     token = token->next;
 }
@@ -160,6 +160,31 @@ Node *equality() {
     }
 }
 
+/**
+ * expression = equality
+**/
 Node *expression() {
     return equality();
+}
+
+/**
+ * statement = expression ";"
+**/
+Node *statement() {
+    Node *lhs = expression();
+    expect(END);
+    return lhs;
+}
+
+/**
+ * program = statement*
+**/
+Node **program() {
+    int statement_num = 0;
+    while (!is_at_eof()) {
+        top_nodes[statement_num] = statement();
+        statement_num++;
+    }
+    top_nodes[statement_num] = NULL;
+    return top_nodes;
 }

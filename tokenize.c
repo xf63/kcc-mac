@@ -53,7 +53,7 @@ Token *tokenize(char *p) {
 
         if (prefix_match(p, PLUS) || prefix_match(p, MINUS) || prefix_match(p, TIMES) || prefix_match(p, DIVIDE)
         || prefix_match(p, PARENTHESES_START) || prefix_match(p, PARENTHESES_END)
-        || prefix_match(p, GREATER_THAN) || prefix_match(p, LESS_THAN)) {
+        || prefix_match(p, GREATER_THAN) || prefix_match(p, LESS_THAN) || prefix_match(p, END)) {
             current = new_token(TOKEN_RESERVED, current, p, 1);
             p++;
             continue;

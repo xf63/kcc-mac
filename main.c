@@ -13,11 +13,11 @@ int main(int argc, char **argv) {
     if (show_debug_info) {
         show_tokens(token);
     }
-    top_node = expression();
+    Node **nodes = program();
     if (show_debug_info) {
-        show_node_tree(top_node);
+        show_node_tree(nodes);
     }
-    generate_assembly(top_node);
+    generate_assembly(nodes);
     
     return 0;
 }

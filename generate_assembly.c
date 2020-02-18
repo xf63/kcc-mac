@@ -98,16 +98,22 @@ void generate(Node *node) {
     }
 }
 
-void generate_assembly(Node *top_node) {
+void generate_assembly(Node **top_nodes) {
     // prologue
     printf(".intel_syntax noprefix\n");
     printf(".section	__TEXT,__text,regular,pure_instructions\n");
     printf(".macosx_version_min 10, 10\n");
     printf(".globl	_main\n");
     printf("_main:\n");
+    printf("  push rbp\n");
+    printf("  mov rbp, rsp\n");
     // main
-    generate(top_node);
-    printf("  pop rax\n");
+    for (int i = 0; top_nodes[i] != NULL; i++) {
+        generate(top_nodes[i]);
+        printf("  pop rax\n");
+    }
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
     printf("  ret\n");
 }
 
@@ -185,9 +191,11 @@ void show_children(Node *node, int depth) {
     show_children(node->rhs, depth + 1);
 }
 
-void show_node_tree(Node *top_node) {
+void show_node_tree(Node **top_nodes) {
     fprintf(stderr, "========node tree========\n");
-    show_children(top_node, 0);
+    for (int i = 0; top_nodes[i] != NULL; i++) {
+        show_children(top_nodes[i], 0);
+    }
     fprintf(stderr, "\n");
     fprintf(stderr, "=========================\n");
 }

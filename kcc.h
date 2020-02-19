@@ -19,6 +19,7 @@
 #define ASSIGN "="
 #define END ";"
 #define RETURN "return"
+#define IF "if"
 
 typedef enum {
     TOKEN_RESERVED,
@@ -55,6 +56,7 @@ typedef enum {
     NODE_ASSIGN,
     NODE_LOCAL_VALUE,
     NODE_RETURN,
+    NODE_IF,
 } NodeType;
 
 struct Node {

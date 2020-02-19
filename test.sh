@@ -51,4 +51,7 @@ try 5 'a = 5; a;'
 try 23 'foo = 11; bar = 12; foo+bar;'
 echo "local variable OK"
 try 3 'return 3; return 2;'
+echo "return syntax OK"
+try 10 'a=0; if (a==0) return 10; return 11;'
+echo "if syntax OK"
 echo OK

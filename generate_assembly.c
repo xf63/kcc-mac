@@ -1,5 +1,6 @@
 #include "kcc.h"
 
+int syntax_number;
 char *node2str(Node *node);
 
 void generate_local_value(Node *local_value_node) {
@@ -34,6 +35,17 @@ void generate(Node *node) {
             generate(node->rhs);
             printf("  pop rax\n");
             printf("  jmp Lend\n");
+            return;
+        }
+        case NODE_IF: {
+            int if_syntax_number = syntax_number;
+            syntax_number++;
+            generate(node->lhs);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            printf("  je Lend%03d\n", if_syntax_number);
+            generate(node->rhs);
+            printf("Lend%03d:\n", if_syntax_number);
             return;
         }
         default:
@@ -137,6 +149,7 @@ void generate(Node *node) {
 }
 
 void generate_assembly(Node **top_nodes) {
+    syntax_number = 0;
     // prologue
     printf(".intel_syntax noprefix\n");
     printf(".section	__TEXT,__text,regular,pure_instructions\n");
@@ -217,6 +230,14 @@ char *node2str(Node *node) {
         }
         case NODE_ASSIGN: {
             strcpy(nodestr, "assign");
+            return nodestr;
+        }
+        case NODE_RETURN: {
+            strcpy(nodestr, "return");
+            return nodestr;
+        }
+        case NODE_IF: {
+            strcpy(nodestr, "if (left) right");
             return nodestr;
         }
         default: {

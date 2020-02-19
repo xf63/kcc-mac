@@ -227,7 +227,8 @@ Node *expression() {
 
 /**
  * statement = expression ";" |
- *              "return" expression ";"
+ *              "return" expression ";" |
+ *              "if" "(" equality ")" statement
 **/
 Node *statement() {
     Node *lhs;
@@ -235,6 +236,12 @@ Node *statement() {
         lhs = new_node(NODE_RETURN, NULL, expression());
         expect(END);
         return lhs;
+    }
+    if (consume_reserved(IF)) {
+        expect(PARENTHESES_START);
+        lhs = equality();
+        expect(PARENTHESES_END);
+        return new_node(NODE_IF, lhs, statement());
     }
     lhs = expression();
     expect(END);

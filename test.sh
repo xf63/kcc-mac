@@ -58,4 +58,5 @@ try 11 'a=0; if (a==1) return 10; else return 11; return 12;'
 echo "if-else syntax OK"
 try 6 'a=0; while (a<5) a = a + 2; return a;'
 echo "while syntax OK"
+try 5 'loop=0;for(i=0;i<5;i=i+1) loop=loop+1; return loop;'
 echo OK

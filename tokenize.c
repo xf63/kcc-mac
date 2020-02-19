@@ -63,6 +63,12 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (memcmp(p, FOR, 3) == 0) {
+            current = new_token(TOKEN_RESERVED, current, p, 3);
+            p = p + 3;
+            continue;
+        }
+
         if (memcmp(p, IF, 2) == 0) {
             current = new_token(TOKEN_RESERVED, current, p, 2);
             p = p + 2;
@@ -78,7 +84,8 @@ Token *tokenize(char *p) {
         if (prefix_match(p, PLUS) || prefix_match(p, MINUS) || prefix_match(p, TIMES) || prefix_match(p, DIVIDE)
         || prefix_match(p, PARENTHESES_START) || prefix_match(p, PARENTHESES_END)
         || prefix_match(p, GREATER_THAN) || prefix_match(p, LESS_THAN) 
-        || prefix_match(p, ASSIGN) || prefix_match(p, END)) {
+        || prefix_match(p, ASSIGN) || prefix_match(p, END)
+        || prefix_match(p, BRACES_START) || prefix_match(p, BRACES_END)) {
             current = new_token(TOKEN_RESERVED, current, p, 1);
             p++;
             continue;

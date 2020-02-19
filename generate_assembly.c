@@ -70,6 +70,26 @@ void generate(Node *node) {
             printf("Lend%03d:\n", while_syntax_number);
             return;
         }
+        case NODE_FOR: {
+            int for_syntax_number = syntax_number;
+            syntax_number++;
+            generate(node->lhs->lhs);
+            printf("Lbegin%03d:\n", for_syntax_number);
+            generate(node->lhs->rhs);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            printf("  je Lend%03d\n", for_syntax_number);
+            generate(node->rhs->rhs);
+            generate(node->rhs->lhs);
+            printf("  jmp Lbegin%03d\n", for_syntax_number);
+            printf("Lend%03d:\n", for_syntax_number);
+            return;
+        }
+        case NODE_BLOCK: {
+            for (Node *stmt = node; stmt->lhs != NULL; stmt = stmt->rhs) {
+                generate(stmt->lhs);
+            }
+        }
         default:
             break;
     }
@@ -260,6 +280,18 @@ char *node2str(Node *node) {
         }
         case NODE_IF: {
             strcpy(nodestr, "if (left) right");
+            return nodestr;
+        }
+        case NODE_ELSE: {
+            strcpy(nodestr, "if (left) right");
+            return nodestr;
+        }
+        case NODE_WHILE: {
+            strcpy(nodestr, "while (left) right");
+            return nodestr;
+        }
+        case NODE_FOR: {
+            strcpy(nodestr, "for (left; right; left) right");
             return nodestr;
         }
         default: {

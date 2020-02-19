@@ -22,6 +22,9 @@
 #define IF "if"
 #define ELSE "else"
 #define WHILE "while"
+#define FOR "for"
+#define BRACES_START "{"
+#define BRACES_END "}"
 
 typedef enum {
     TOKEN_RESERVED,
@@ -61,6 +64,8 @@ typedef enum {
     NODE_IF,
     NODE_ELSE,
     NODE_WHILE,
+    NODE_FOR,
+    NODE_BLOCK,
 } NodeType;
 
 struct Node {

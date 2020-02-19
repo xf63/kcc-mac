@@ -229,7 +229,9 @@ Node *expression() {
  * statement = expression ";" |
  *              "return" expression ";" |
  *              "if" "(" equality ")" statement ("else" statement)? |
- *              "while" "(" equality ")" statement
+ *              "while" "(" equality ")" statement |
+ *              "for" "(" (assign)? ";" (equality)? ";" (assign)? ")" statement
+ *              "{" statement* "}"
 **/
 Node *statement() {
     Node *lhs;
@@ -256,6 +258,35 @@ Node *statement() {
         lhs = equality();
         expect(PARENTHESES_END);
         return new_node(NODE_WHILE, lhs, statement());
+    }
+    if (consume_reserved(FOR)) {
+        expect(PARENTHESES_START);
+        Node *init_check_node = init_node(NODE_FOR);
+        Node *increment_execute_node = init_node(NODE_FOR);
+        if (!consume_reserved(END)) {
+            init_check_node->lhs = assign();
+            expect(END);
+        }
+        if (!consume_reserved(END)) {
+            init_check_node->rhs = equality();
+            expect(END);
+        }
+        if (!consume_reserved(PARENTHESES_END)) {
+            increment_execute_node->lhs = assign();
+            expect(PARENTHESES_END);
+        }
+        increment_execute_node->rhs = statement();
+        return new_node(NODE_FOR, init_check_node, increment_execute_node);
+    }
+    if (consume_reserved(BRACES_START)) {
+        Node *brace_top_node = init_node(NODE_BLOCK);
+        lhs = brace_top_node;
+        while (!consume_reserved(BRACES_END)) {
+            lhs->lhs = statement();
+            lhs->rhs = init_node(NODE_BLOCK);
+            lhs = lhs->rhs;
+        }
+        return brace_top_node;
     }
     lhs = expression();
     expect(END);

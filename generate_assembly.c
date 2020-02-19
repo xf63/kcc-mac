@@ -57,6 +57,19 @@ void generate(Node *node) {
             printf("Lend%03d:\n", if_syntax_number);
             return;
         }
+        case NODE_WHILE: {
+            int while_syntax_number = syntax_number;
+            syntax_number++;
+            printf("Lbegin%03d:\n", while_syntax_number);
+            generate(node->lhs);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            printf("  je Lend%03d\n", while_syntax_number);
+            generate(node->rhs);
+            printf("  jmp Lbegin%03d\n", while_syntax_number);
+            printf("Lend%03d:\n", while_syntax_number);
+            return;
+        }
         default:
             break;
     }

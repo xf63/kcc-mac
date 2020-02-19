@@ -51,6 +51,12 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (memcmp(p, WHILE, 5) == 0) {
+            current = new_token(TOKEN_RESERVED, current, p, 5);
+            p = p + 5;
+            continue;
+        }
+
         if (memcmp(p, ELSE, 4) == 0) {
             current = new_token(TOKEN_RESERVED, current, p, 4);
             p = p + 4;

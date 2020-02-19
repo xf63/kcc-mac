@@ -21,6 +21,7 @@
 #define RETURN "return"
 #define IF "if"
 #define ELSE "else"
+#define WHILE "while"
 
 typedef enum {
     TOKEN_RESERVED,
@@ -59,6 +60,7 @@ typedef enum {
     NODE_RETURN,
     NODE_IF,
     NODE_ELSE,
+    NODE_WHILE,
 } NodeType;
 
 struct Node {

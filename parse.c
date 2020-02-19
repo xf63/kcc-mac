@@ -228,7 +228,8 @@ Node *expression() {
 /**
  * statement = expression ";" |
  *              "return" expression ";" |
- *              "if" "(" equality ")" statement ("else" statement)?
+ *              "if" "(" equality ")" statement ("else" statement)? |
+ *              "while" "(" equality ")" statement
 **/
 Node *statement() {
     Node *lhs;
@@ -249,6 +250,12 @@ Node *statement() {
         else_node->lhs = rhs;
         else_node->rhs = statement();
         return new_node(NODE_IF, lhs, else_node);
+    }
+    if (consume_reserved(WHILE)) {
+        expect(PARENTHESES_START);
+        lhs = equality();
+        expect(PARENTHESES_END);
+        return new_node(NODE_WHILE, lhs, statement());
     }
     lhs = expression();
     expect(END);

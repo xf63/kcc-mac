@@ -20,6 +20,7 @@
 #define END ";"
 #define RETURN "return"
 #define IF "if"
+#define ELSE "else"
 
 typedef enum {
     TOKEN_RESERVED,
@@ -57,6 +58,7 @@ typedef enum {
     NODE_LOCAL_VALUE,
     NODE_RETURN,
     NODE_IF,
+    NODE_ELSE,
 } NodeType;
 
 struct Node {

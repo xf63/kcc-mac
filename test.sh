@@ -54,4 +54,6 @@ try 3 'return 3; return 2;'
 echo "return syntax OK"
 try 10 'a=0; if (a==0) return 10; return 11;'
 echo "if syntax OK"
+try 11 'a=0; if (a==1) return 10; else return 11; return 12;'
+echo "if-else syntax OK"
 echo OK

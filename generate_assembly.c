@@ -43,8 +43,17 @@ void generate(Node *node) {
             generate(node->lhs);
             printf("  pop rax\n");
             printf("  cmp rax, 0\n");
-            printf("  je Lend%03d\n", if_syntax_number);
-            generate(node->rhs);
+            if (node->rhs->type == NODE_ELSE) {
+                printf("  je Lelse%03d\n", if_syntax_number);
+                generate(node->rhs->lhs);
+                printf("  jmp Lend%03d\n", if_syntax_number);
+                printf("Lelse%03d:\n", if_syntax_number);
+                generate(node->rhs->rhs);
+            }
+            else {
+                printf("  je Lend%03d\n", if_syntax_number);
+                generate(node->rhs);
+            }
             printf("Lend%03d:\n", if_syntax_number);
             return;
         }

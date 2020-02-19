@@ -50,4 +50,5 @@ echo "multiple statement OK"
 try 5 'a = 5; a;'
 try 23 'foo = 11; bar = 12; foo+bar;'
 echo "local variable OK"
+try 3 'return 3; return 2;'
 echo OK

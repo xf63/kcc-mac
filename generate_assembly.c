@@ -30,6 +30,12 @@ void generate(Node *node) {
             printf("  mov [rax], rdi\n");
             printf("  push rdi\n");
             return;
+        case NODE_RETURN: {
+            generate(node->rhs);
+            printf("  pop rax\n");
+            printf("  jmp Lend\n");
+            return;
+        }
         default:
             break;
     }
@@ -148,6 +154,7 @@ void generate_assembly(Node **top_nodes) {
         generate(top_nodes[i]);
         printf("  pop rax\n");
     }
+    printf("Lend:\n");
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
     printf("  ret\n");

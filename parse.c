@@ -226,10 +226,17 @@ Node *expression() {
 }
 
 /**
- * statement = expression ";"
+ * statement = expression ";" |
+ *              "return" expression ";"
 **/
 Node *statement() {
-    Node *lhs = expression();
+    Node *lhs;
+    if (consume_reserved(RETURN)) {
+        lhs = new_node(NODE_RETURN, NULL, expression());
+        expect(END);
+        return lhs;
+    }
+    lhs = expression();
     expect(END);
     return lhs;
 }

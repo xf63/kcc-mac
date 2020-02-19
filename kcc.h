@@ -18,6 +18,7 @@
 #define LESS_EQUAL "<="
 #define ASSIGN "="
 #define END ";"
+#define RETURN "return"
 
 typedef enum {
     TOKEN_RESERVED,
@@ -53,6 +54,7 @@ typedef enum {
     NODE_LESS_EQUAL,
     NODE_ASSIGN,
     NODE_LOCAL_VALUE,
+    NODE_RETURN,
 } NodeType;
 
 struct Node {

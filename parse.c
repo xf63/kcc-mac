@@ -30,38 +30,85 @@ bool is_at_eof() {
     return token->type == TOKEN_EOF;
 }
 
-Node *init_node() {
+Node *init_node(NodeType type) {
     Node *node = calloc(1, sizeof(Node));
+    node->type = type;
     node->lhs = NULL;
     node->rhs = NULL;
+    node->var = NULL;
     return node;
 }
 
 Node *new_node(NodeType type, Node *lhs, Node *rhs) {
-    Node *node = init_node();
-    node->type = type;
+    Node *node = init_node(type);
     node->lhs = lhs;
     node->rhs = rhs;
     return node;
 }
 
 Node *new_node_number(int number) {
-    Node *node = init_node();
-    node->type = NODE_VAL;
+    Node *node = init_node(NODE_VAL);
     node->value = number;
     return node;
+}
+
+LocalVar *checkAlreadyAllocated(Token *identifier_token) {
+    for (LocalVar *var = first; var != NULL; var = var->next) {
+        if (identifier_token->len == var->len && memcmp(identifier_token->str, var->name, var->len) == 0) {
+            return var;
+        }
+    }
+    return NULL;
+}
+
+Token *consume_identifier() {
+    if (token->type != TOKEN_IDENTIFIER) {
+        return NULL;
+    }
+    Token *identifier_token = token;
+    token = token->next;
+    return identifier_token;
+}
+
+Node *new_node_identifier(Token *identifier_token) {
+    LocalVar *var = checkAlreadyAllocated(identifier_token);
+    Node *identifier_node = init_node(NODE_LOCAL_VALUE);
+    if (var != NULL) {
+        identifier_node->var = var;
+        return identifier_node;
+    }
+    var = calloc(1, sizeof(LocalVar));
+    var->name = identifier_token->str;
+    var->len = identifier_token->len;
+
+    int default_offset = 0;
+    if (last != NULL) {
+        default_offset = last->offset;
+        last->next = var;
+    }
+    var->offset = default_offset + 8;
+    last = var;
+    if (first == NULL) {
+        first = var;
+    }
+    identifier_node->var = var;
+    return identifier_node;
 }
 
 Node *expression();
 
 /**
- * primary = [0-9]* | "(" expression ")"
+ * primary = [0-9]* | "(" expression ")" | ident
 **/
 Node *primary() {
     if (consume_reserved(PARENTHESES_START)) {
         Node *inside_parentheses = expression();
         expect(PARENTHESES_END);
         return inside_parentheses;
+    }
+    Token *identifier_token = consume_identifier();
+    if (identifier_token != NULL) {
+        return new_node_identifier(identifier_token);
     }
     return new_node_number(expect_number());
 }
@@ -161,10 +208,21 @@ Node *equality() {
 }
 
 /**
- * expression = equality
+ * assign = equality ("=" assign)?
+**/
+Node *assign() {
+    Node *lhs = equality();
+    if (consume_reserved(ASSIGN)) {
+        lhs = new_node(NODE_ASSIGN, lhs, assign());
+    }
+    return lhs;
+}
+
+/**
+ * expression = assign
 **/
 Node *expression() {
-    return equality();
+    return assign();
 }
 
 /**
@@ -180,6 +238,8 @@ Node *statement() {
  * program = statement*
 **/
 Node **program() {
+    first = NULL;
+    last = NULL;
     int statement_num = 0;
     while (!is_at_eof()) {
         top_nodes[statement_num] = statement();

@@ -16,16 +16,19 @@
 #define GREATER_EQUAL ">="
 #define LESS_THAN "<"
 #define LESS_EQUAL "<="
+#define ASSIGN "="
 #define END ";"
 
 typedef enum {
     TOKEN_RESERVED,
     TOKEN_NUMBER,
+    TOKEN_IDENTIFIER,
     TOKEN_EOF,
 } TokenType;
 
 typedef struct Token Token;
 typedef struct Node Node;
+typedef struct LocalVar LocalVar;
 
 struct Token {
     TokenType type;
@@ -48,6 +51,8 @@ typedef enum {
     NODE_GREATER_EQUAL,
     NODE_LESS_THAN,
     NODE_LESS_EQUAL,
+    NODE_ASSIGN,
+    NODE_LOCAL_VALUE,
 } NodeType;
 
 struct Node {
@@ -55,9 +60,21 @@ struct Node {
     Node *lhs;
     Node *rhs;
     int value;
+    LocalVar *var;
 };
 
+struct LocalVar {
+    LocalVar *next;
+    char *name;
+    int len;
+    int offset;
+};
+
+
 Node *top_nodes[100];
+
+LocalVar *first;
+LocalVar *last;
 
 char *user_input;
 

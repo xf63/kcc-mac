@@ -46,5 +46,8 @@ try 0 '9 < 3 * 3;'
 try 1 '7 <= 2 * 4;'
 echo "relational OK"
 try 43 '42; 43;'
-
+echo "multiple statement OK"
+try 5 'a = 5; a;'
+try 23 'foo = 11; bar = 12; foo+bar;'
+echo "local variable OK"
 echo OK

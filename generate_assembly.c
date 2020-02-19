@@ -1,9 +1,39 @@
 #include "kcc.h"
 
+char *node2str(Node *node);
+
+void generate_local_value(Node *local_value_node) {
+    if (local_value_node->type != NODE_LOCAL_VALUE) {
+        error("local value expected, but got %s", node2str(local_value_node));
+    }
+    printf("  mov rax, rbp\n");
+    printf("  sub rax, %d\n", local_value_node->var->offset);
+    printf("  push rax\n");
+}
+
 void generate(Node *node) {
     if (node == NULL) {
         return;
     }
+    switch (node->type) {
+        case NODE_LOCAL_VALUE:
+            generate_local_value(node);
+            printf("  pop rax\n");
+            printf("  mov rax, [rax]\n");
+            printf("  push rax\n");
+            return;
+        case NODE_ASSIGN:
+            generate_local_value(node->lhs);
+            generate(node->rhs);
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  mov [rax], rdi\n");
+            printf("  push rdi\n");
+            return;
+        default:
+            break;
+    }
+
     generate(node->lhs);
     generate(node->rhs);
 
@@ -95,6 +125,8 @@ void generate(Node *node) {
             printf("  push rax\n");
             return;
         }
+        default:
+            error("unknown node category: %d", node->type);
     }
 }
 
@@ -107,6 +139,10 @@ void generate_assembly(Node **top_nodes) {
     printf("_main:\n");
     printf("  push rbp\n");
     printf("  mov rbp, rsp\n");
+    // local value stack allocation
+    if (last != NULL) {
+        printf("  sub rsp, %d\n", last->offset);
+    }
     // main
     for (int i = 0; top_nodes[i] != NULL; i++) {
         generate(top_nodes[i]);
@@ -121,7 +157,7 @@ char nodestr[100];
 
 char *node2str(Node *node) {
     if (node == NULL) {
-        return "NULL";
+        return "-";
     }
     if (node->type == NODE_VAL) {
         sprintf(nodestr, "val: %d", node->value);
@@ -168,6 +204,14 @@ char *node2str(Node *node) {
             strcpy(nodestr, "(<=)");
             return nodestr;
         }
+        case NODE_LOCAL_VALUE: {
+            sprintf(nodestr, "local value offset : %d", node->var->offset);
+            return nodestr;
+        }
+        case NODE_ASSIGN: {
+            strcpy(nodestr, "assign");
+            return nodestr;
+        }
         default: {
             sprintf(nodestr, "type: %d", node->type);
             return nodestr;
@@ -178,7 +222,7 @@ char *node2str(Node *node) {
 
 void show_children(Node *node, int depth) {
     if (node == NULL) {
-        fprintf(stderr, "NULL");
+        fprintf(stderr, "-");
         return;
     }
     fprintf(stderr, "%s\n", node2str(node));
@@ -195,7 +239,7 @@ void show_node_tree(Node **top_nodes) {
     fprintf(stderr, "========node tree========\n");
     for (int i = 0; top_nodes[i] != NULL; i++) {
         show_children(top_nodes[i], 0);
+        fprintf(stderr, "\n");
     }
-    fprintf(stderr, "\n");
     fprintf(stderr, "=========================\n");
 }

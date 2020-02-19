@@ -53,7 +53,8 @@ Token *tokenize(char *p) {
 
         if (prefix_match(p, PLUS) || prefix_match(p, MINUS) || prefix_match(p, TIMES) || prefix_match(p, DIVIDE)
         || prefix_match(p, PARENTHESES_START) || prefix_match(p, PARENTHESES_END)
-        || prefix_match(p, GREATER_THAN) || prefix_match(p, LESS_THAN) || prefix_match(p, END)) {
+        || prefix_match(p, GREATER_THAN) || prefix_match(p, LESS_THAN) 
+        || prefix_match(p, ASSIGN) || prefix_match(p, END)) {
             current = new_token(TOKEN_RESERVED, current, p, 1);
             p++;
             continue;
@@ -62,6 +63,17 @@ Token *tokenize(char *p) {
         if ('0' <= *p && *p <= '9') {
             current = new_token(TOKEN_NUMBER, current, p, -1);
             current->val = strtol(p, &p, 10);
+            continue;
+        }
+
+        if ('a' <= *p && *p <= 'z') {
+            char *identifier_start = p;
+            int i = 0;
+            while (('a' <= *p && *p <= 'z') || ('0' <= *p && *p <= '9') || *p == '_') {
+                i++;
+                p++;
+            }
+            current = new_token(TOKEN_IDENTIFIER, current, identifier_start, i);
             continue;
         }
 
@@ -76,13 +88,20 @@ void show_tokens(Token *head) {
     fprintf(stderr, "========tokens start=======\n");
     for (Token *tok = head; tok->type != TOKEN_EOF; tok = tok->next) {
         if (tok->type == TOKEN_NUMBER) {
-            fprintf(stderr, "%d ", tok->val);
+            fprintf(stderr, "num:'%d' ", tok->val);
         }
         else {
-            char output[10];
-            strncpy(output, tok->str, tok->len);
-            output[tok->len] = '\0';
-            fprintf(stderr, "%s ", output);
+            char tokenstr[10];
+            strncpy(tokenstr, tok->str, tok->len);
+            tokenstr[tok->len] = '\0';
+            char *token_category;
+            if (tok->type == TOKEN_RESERVED) {
+                token_category = "RSVD:";
+            }
+            else if (tok->type == TOKEN_IDENTIFIER) {
+                token_category = "IDNT:";
+            }
+            fprintf(stderr, "%s'%s' ", token_category, tokenstr);
         }
     }
     fprintf(stderr, "\n");

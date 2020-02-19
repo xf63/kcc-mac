@@ -59,4 +59,7 @@ echo "if-else syntax OK"
 try 6 'a=0; while (a<5) a = a + 2; return a;'
 echo "while syntax OK"
 try 5 'loop=0;for(i=0;i<5;i=i+1) loop=loop+1; return loop;'
+echo "for syntax OK"
+try 15 'l1=0;l2=0;for (a=0; a<5; a=a+1) {l1=l1+1;l2=l2+2;} return l1+l2;'
+echo "braces block OK"
 echo OK

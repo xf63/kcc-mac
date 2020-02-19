@@ -89,6 +89,7 @@ void generate(Node *node) {
             for (Node *stmt = node; stmt->lhs != NULL; stmt = stmt->rhs) {
                 generate(stmt->lhs);
             }
+            return;
         }
         default:
             break;
@@ -292,6 +293,10 @@ char *node2str(Node *node) {
         }
         case NODE_FOR: {
             strcpy(nodestr, "for (left; right; left) right");
+            return nodestr;
+        }
+        case NODE_BLOCK: {
+            strcpy(nodestr, "block");
             return nodestr;
         }
         default: {

@@ -1,7 +1,7 @@
 #include "kcc.h"
 
 bool consume_reserved(char *operator) {
-    if (token->type != TOKEN_RESERVED || strlen(operator) != token->len
+    if (token->category != TOKEN_RESERVED || strlen(operator) != token->len
     || memcmp(token->str, operator, token->len) != 0) {
         return false;
     }
@@ -10,7 +10,7 @@ bool consume_reserved(char *operator) {
 }
 
 void expect(char *operator) {
-    if (token->type != TOKEN_RESERVED || strlen(operator) != token->len
+    if (token->category != TOKEN_RESERVED || strlen(operator) != token->len
     || memcmp(token->str, operator, token->len) != 0) {
         error_at(token->str, "%s is expected", operator);
     }
@@ -18,7 +18,7 @@ void expect(char *operator) {
 }
 
 int expect_number() {
-    if (token->type != TOKEN_NUMBER) {
+    if (token->category != TOKEN_NUMBER) {
         error_at(token->str, "number is expected");
     }
     int value = token->val;
@@ -27,20 +27,20 @@ int expect_number() {
 }
 
 bool is_at_eof() {
-    return token->type == TOKEN_EOF;
+    return token->category == TOKEN_EOF;
 }
 
-Node *init_node(NodeType type) {
+Node *init_node(NodeCategory category) {
     Node *node = calloc(1, sizeof(Node));
-    node->type = type;
+    node->category = category;
     node->lhs = NULL;
     node->rhs = NULL;
     node->var = NULL;
     return node;
 }
 
-Node *new_node(NodeType type, Node *lhs, Node *rhs) {
-    Node *node = init_node(type);
+Node *new_node(NodeCategory category, Node *lhs, Node *rhs) {
+    Node *node = init_node(category);
     node->lhs = lhs;
     node->rhs = rhs;
     return node;
@@ -62,7 +62,7 @@ LocalVar *checkAlreadyAllocated(Token *identifier_token) {
 }
 
 Token *consume_identifier() {
-    if (token->type != TOKEN_IDENTIFIER) {
+    if (token->category != TOKEN_IDENTIFIER) {
         return NULL;
     }
     Token *identifier_token = token;

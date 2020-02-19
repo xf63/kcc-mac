@@ -21,9 +21,9 @@ void error_at(char *loc, char *fmt, ...) {
     exit(1);
 }
 
-Token *new_token(TokenType type, Token *current, char *str, int len) {
+Token *new_token(TokenCategory category, Token *current, char *str, int len) {
     Token *token = calloc(1, sizeof(Token));
-    token->type = type;
+    token->category = category;
     token->str = str;
     token->len = len;
     current->next = token;
@@ -117,8 +117,8 @@ Token *tokenize(char *p) {
 
 void show_tokens(Token *head) {
     fprintf(stderr, "========tokens start=======\n");
-    for (Token *tok = head; tok->type != TOKEN_EOF; tok = tok->next) {
-        if (tok->type == TOKEN_NUMBER) {
+    for (Token *tok = head; tok->category != TOKEN_EOF; tok = tok->next) {
+        if (tok->category == TOKEN_NUMBER) {
             fprintf(stderr, "num:'%d' ", tok->val);
         }
         else {
@@ -126,10 +126,10 @@ void show_tokens(Token *head) {
             strncpy(tokenstr, tok->str, tok->len);
             tokenstr[tok->len] = '\0';
             char *token_category;
-            if (tok->type == TOKEN_RESERVED) {
+            if (tok->category == TOKEN_RESERVED) {
                 token_category = "RSVD:";
             }
-            else if (tok->type == TOKEN_IDENTIFIER) {
+            else if (tok->category == TOKEN_IDENTIFIER) {
                 token_category = "IDNT:";
             }
             fprintf(stderr, "%s'%s' ", token_category, tokenstr);

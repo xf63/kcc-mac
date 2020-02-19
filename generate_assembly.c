@@ -4,7 +4,7 @@ int syntax_number;
 char *node2str(Node *node);
 
 void generate_local_value(Node *local_value_node) {
-    if (local_value_node->type != NODE_LOCAL_VALUE) {
+    if (local_value_node->category != NODE_LOCAL_VALUE) {
         error("local value expected, but got %s", node2str(local_value_node));
     }
     printf("  mov rax, rbp\n");
@@ -16,7 +16,7 @@ void generate(Node *node) {
     if (node == NULL) {
         return;
     }
-    switch (node->type) {
+    switch (node->category) {
         case NODE_LOCAL_VALUE:
             generate_local_value(node);
             printf("  pop rax\n");
@@ -43,7 +43,7 @@ void generate(Node *node) {
             generate(node->lhs);
             printf("  pop rax\n");
             printf("  cmp rax, 0\n");
-            if (node->rhs->type == NODE_ELSE) {
+            if (node->rhs->category == NODE_ELSE) {
                 printf("  je Lelse%03d\n", if_syntax_number);
                 generate(node->rhs->lhs);
                 printf("  jmp Lend%03d\n", if_syntax_number);
@@ -98,7 +98,7 @@ void generate(Node *node) {
     generate(node->lhs);
     generate(node->rhs);
 
-    switch (node->type) {
+    switch (node->category) {
         case NODE_VAL: {
             printf("  push %d\n", node->value);
             return;
@@ -187,7 +187,7 @@ void generate(Node *node) {
             return;
         }
         default:
-            error("unknown node category: %d", node->type);
+            error("unknown node category: %d", node->category);
     }
 }
 
@@ -222,11 +222,11 @@ char *node2str(Node *node) {
     if (node == NULL) {
         return "-";
     }
-    if (node->type == NODE_VAL) {
+    if (node->category == NODE_VAL) {
         sprintf(nodestr, "val: %d", node->value);
         return nodestr;
     }
-    switch (node->type) {
+    switch (node->category) {
         case NODE_ADD: {
             strcpy(nodestr, "(+)");
             return nodestr;
@@ -300,7 +300,7 @@ char *node2str(Node *node) {
             return nodestr;
         }
         default: {
-            sprintf(nodestr, "type: %d", node->type);
+            sprintf(nodestr, "category: %d", node->category);
             return nodestr;
         }
     }

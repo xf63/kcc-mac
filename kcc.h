@@ -31,14 +31,14 @@ typedef enum {
     TOKEN_NUMBER,
     TOKEN_IDENTIFIER,
     TOKEN_EOF,
-} TokenType;
+} TokenCategory;
 
 typedef struct Token Token;
 typedef struct Node Node;
 typedef struct LocalVar LocalVar;
 
 struct Token {
-    TokenType type;
+    TokenCategory category;
     Token *next;
     int val;
     char *str;
@@ -66,10 +66,10 @@ typedef enum {
     NODE_WHILE,
     NODE_FOR,
     NODE_BLOCK,
-} NodeType;
+} NodeCategory;
 
 struct Node {
-    NodeType type;
+    NodeCategory category;
     Node *lhs;
     Node *rhs;
     int value;

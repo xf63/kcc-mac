@@ -42,7 +42,7 @@ void generate(Node *node) {
         case NODE_RETURN: {
             generate(node->rhs);
             printf("  pop rax\n");
-            printf("  jmp Lend\n");
+            printf("  jmp Lend%s\n", get_func_name(node));
             return;
         }
         case NODE_IF: {
@@ -101,13 +101,29 @@ void generate(Node *node) {
         }
         case NODE_CALL_FUNCTION: {
             int arg_num = 0;
-            for (Node *arg_node = node->rhs; arg_node != NULL; arg_node = arg_node->rhs) {
+            for (Node *arg_node = node->lhs; arg_node != NULL; arg_node = arg_node->rhs) {
                 generate(arg_node->lhs);
                 printf("  pop %s\n", argument_register[arg_num]);
                 arg_num++;
             }
             printf("  call _%s\n", get_func_name(node));
             printf("  push rax\n");
+            return;
+        }
+        case NODE_DEFINE_FUNCTION: {
+            printf("_%s:\n", get_func_name(node));
+            printf("  push rbp\n");
+            printf("  mov rbp, rsp\n");
+            // local value stack allocation
+            if (node->func->last != NULL) {
+                printf("  sub rsp, %d\n", node->func->last->offset);
+            }
+            generate(node->rhs);
+            printf("  pop rax\n");
+            printf("Lend%s:\n", get_func_name(node));
+            printf("  mov rsp, rbp\n");
+            printf("  pop rbp\n");
+            printf("  ret\n");
             return;
         }
         default:
@@ -217,22 +233,10 @@ void generate_assembly(Node **top_nodes) {
     printf(".section	__TEXT,__text,regular,pure_instructions\n");
     printf(".macosx_version_min 10, 10\n");
     printf(".globl	_main\n");
-    printf("_main:\n");
-    printf("  push rbp\n");
-    printf("  mov rbp, rsp\n");
-    // local value stack allocation
-    if (last != NULL) {
-        printf("  sub rsp, %d\n", last->offset);
-    }
     // main
     for (int i = 0; top_nodes[i] != NULL; i++) {
         generate(top_nodes[i]);
-        printf("  pop rax\n");
     }
-    printf("Lend:\n");
-    printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
-    printf("  ret\n");
 }
 
 char nodestr[100];
@@ -319,10 +323,11 @@ char *node2str(Node *node) {
             return nodestr;
         }
         case NODE_CALL_FUNCTION: {
-            char func_name[10];
-            strncpy(func_name, node->func->name, node->func->len);
-            func_name[node->func->len] = '\0';
-            sprintf(nodestr, "call function: %s", func_name);
+            sprintf(nodestr, "call function: %s", get_func_name(node));
+            return nodestr;
+        }
+        case NODE_DEFINE_FUNCTION: {
+            sprintf(nodestr, "define function: %s", get_func_name(node));
             return nodestr;
         }
         case NODE_ARGUMENT: {

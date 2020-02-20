@@ -70,6 +70,7 @@ typedef enum {
     NODE_BLOCK,
     NODE_CALL_FUNCTION,
     NODE_ARGUMENT,
+    NODE_DEFINE_FUNCTION,
 } NodeCategory;
 
 struct Node {
@@ -91,15 +92,15 @@ struct LocalVar {
 struct Function {
     char *name;
     int len;
+    LocalVar *first;
+    LocalVar *last;
 };
-
 
 Node *top_nodes[100];
 
-LocalVar *first;
-LocalVar *last;
-
 char *user_input;
+
+Function *current_function;
 
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);

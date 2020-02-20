@@ -54,7 +54,7 @@ Node *new_node_number(int number) {
 }
 
 LocalVar *checkAlreadyAllocated(Token *identifier_token) {
-    for (LocalVar *var = first; var != NULL; var = var->next) {
+    for (LocalVar *var = current_function->first; var != NULL; var = var->next) {
         if (identifier_token->len == var->len && memcmp(identifier_token->str, var->name, var->len) == 0) {
             return var;
         }
@@ -65,6 +65,15 @@ LocalVar *checkAlreadyAllocated(Token *identifier_token) {
 Token *consume_identifier() {
     if (token->category != TOKEN_IDENTIFIER) {
         return NULL;
+    }
+    Token *identifier_token = token;
+    token = token->next;
+    return identifier_token;
+}
+
+Token *expect_identifier() {
+    if (token->category != TOKEN_IDENTIFIER) {
+        error_at(token->str, "alphabet character is expected");
     }
     Token *identifier_token = token;
     token = token->next;
@@ -83,14 +92,14 @@ Node *new_node_local_value(Token *identifier_token) {
     var->len = identifier_token->len;
 
     int default_offset = 0;
-    if (last != NULL) {
-        default_offset = last->offset;
-        last->next = var;
+    if (current_function->last != NULL) {
+        default_offset = current_function->last->offset;
+        current_function->last->next = var;
     }
     var->offset = default_offset + 8;
-    last = var;
-    if (first == NULL) {
-        first = var;
+    current_function->last = var;
+    if (current_function->first == NULL) {
+        current_function->first = var;
     }
     identifier_node->var = var;
     return identifier_node;
@@ -125,7 +134,7 @@ Node *primary() {
                     current = current->rhs;
                     current->lhs = expression();
                 }
-                func_call_node->rhs = head;
+                func_call_node->lhs = head;
                 expect(PARENTHESES_END);
             }
             return func_call_node;
@@ -260,6 +269,7 @@ Node *statement() {
     if (consume_reserved(RETURN)) {
         lhs = new_node(NODE_RETURN, NULL, expression());
         expect(END);
+        lhs->func = current_function;
         return lhs;
     }
     if (consume_reserved(IF)) {
@@ -316,16 +326,30 @@ Node *statement() {
 }
 
 /**
- * program = statement*
+ * declaration = ident "(" ")" statement
+**/
+Node *declaration() {
+    Node *function_node = init_node(NODE_DEFINE_FUNCTION);
+    current_function = calloc(1, sizeof(Function));
+    Token *function_token = expect_identifier();
+    current_function->name = function_token->str;
+    current_function->len = function_token->len;
+    function_node->func = current_function;
+    expect(PARENTHESES_START);
+    expect(PARENTHESES_END);
+    function_node->rhs = statement();
+    return function_node;
+}
+
+/**
+ * program = declaration*
 **/
 Node **program() {
-    first = NULL;
-    last = NULL;
-    int statement_num = 0;
+    int num = 0;
     while (!is_at_eof()) {
-        top_nodes[statement_num] = statement();
-        statement_num++;
+        top_nodes[num] = declaration();
+        num++;
     }
-    top_nodes[statement_num] = NULL;
+    top_nodes[num] = NULL;
     return top_nodes;
 }

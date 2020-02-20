@@ -36,6 +36,7 @@ Node *init_node(NodeCategory category) {
     node->lhs = NULL;
     node->rhs = NULL;
     node->var = NULL;
+    node->func = NULL;
     return node;
 }
 
@@ -70,7 +71,7 @@ Token *consume_identifier() {
     return identifier_token;
 }
 
-Node *new_node_identifier(Token *identifier_token) {
+Node *new_node_local_value(Token *identifier_token) {
     LocalVar *var = checkAlreadyAllocated(identifier_token);
     Node *identifier_node = init_node(NODE_LOCAL_VALUE);
     if (var != NULL) {
@@ -98,7 +99,8 @@ Node *new_node_identifier(Token *identifier_token) {
 Node *expression();
 
 /**
- * primary = [0-9]* | "(" expression ")" | ident
+ * primary = [0-9]* | "(" expression ")" |
+ *          ident ("(" (expression ("," expression)*)? ")")?
 **/
 Node *primary() {
     if (consume_reserved(PARENTHESES_START)) {
@@ -108,7 +110,27 @@ Node *primary() {
     }
     Token *identifier_token = consume_identifier();
     if (identifier_token != NULL) {
-        return new_node_identifier(identifier_token);
+        if (consume_reserved(PARENTHESES_START)) {
+            Node *func_call_node = init_node(NODE_CALL_FUNCTION);
+            Function *called_func = calloc(1, sizeof(Function));
+            called_func->name = identifier_token->str;
+            called_func->len = identifier_token->len;
+            func_call_node->func = called_func;
+            Node *head = init_node(NODE_ARGUMENT);
+            Node *current = head;
+            if (!consume_reserved(PARENTHESES_END)) {
+                head->lhs = expression();
+                while (consume_reserved(WITH)) {
+                    current->rhs = init_node(NODE_ARGUMENT);
+                    current = current->rhs;
+                    current->lhs = expression();
+                }
+                func_call_node->rhs = head;
+                expect(PARENTHESES_END);
+            }
+            return func_call_node;
+        }
+        return new_node_local_value(identifier_token);
     }
     return new_node_number(expect_number());
 }

@@ -34,6 +34,10 @@ bool prefix_match(char *target, char *pattern) {
     return memcmp(target, pattern, strlen(pattern)) == 0;
 }
 
+bool is_alphabet_or_number(char c) {
+    return ('a' <= c && c <= 'z') || ('0' <= c && c <= '9') || c == '_';
+}
+
 Token *tokenize(char *p) {
     Token head;
     head.next = NULL;
@@ -45,31 +49,31 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (memcmp(p, RETURN, 6) == 0) {
+        if (memcmp(p, RETURN, 6) == 0 && !is_alphabet_or_number(p[6])) {
             current = new_token(TOKEN_RESERVED, current, p, 6);
             p = p + 6;
             continue;
         }
 
-        if (memcmp(p, WHILE, 5) == 0) {
+        if (memcmp(p, WHILE, 5) == 0 && !is_alphabet_or_number(p[5])) {
             current = new_token(TOKEN_RESERVED, current, p, 5);
             p = p + 5;
             continue;
         }
 
-        if (memcmp(p, ELSE, 4) == 0) {
+        if (memcmp(p, ELSE, 4) == 0 && !is_alphabet_or_number(p[4])) {
             current = new_token(TOKEN_RESERVED, current, p, 4);
             p = p + 4;
             continue;
         }
 
-        if (memcmp(p, FOR, 3) == 0) {
+        if (memcmp(p, FOR, 3) == 0 && !is_alphabet_or_number(p[3])) {
             current = new_token(TOKEN_RESERVED, current, p, 3);
             p = p + 3;
             continue;
         }
 
-        if (memcmp(p, IF, 2) == 0) {
+        if (memcmp(p, IF, 2) == 0 && !is_alphabet_or_number(p[2])) {
             current = new_token(TOKEN_RESERVED, current, p, 2);
             p = p + 2;
             continue;
@@ -84,7 +88,7 @@ Token *tokenize(char *p) {
         if (prefix_match(p, PLUS) || prefix_match(p, MINUS) || prefix_match(p, TIMES) || prefix_match(p, DIVIDE)
         || prefix_match(p, PARENTHESES_START) || prefix_match(p, PARENTHESES_END)
         || prefix_match(p, GREATER_THAN) || prefix_match(p, LESS_THAN) 
-        || prefix_match(p, ASSIGN) || prefix_match(p, END)
+        || prefix_match(p, ASSIGN) || prefix_match(p, END) || prefix_match(p, WITH)
         || prefix_match(p, BRACES_START) || prefix_match(p, BRACES_END)) {
             current = new_token(TOKEN_RESERVED, current, p, 1);
             p++;
@@ -100,7 +104,7 @@ Token *tokenize(char *p) {
         if ('a' <= *p && *p <= 'z') {
             char *identifier_start = p;
             int i = 0;
-            while (('a' <= *p && *p <= 'z') || ('0' <= *p && *p <= '9') || *p == '_') {
+            while (is_alphabet_or_number(*p)) {
                 i++;
                 p++;
             }

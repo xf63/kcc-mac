@@ -1,10 +1,24 @@
 #!/bin/bash
+build_binary() {
+    gcc -o tmp tmp.s
+}
+
+build_binary_with_cfuncs() {
+    gcc -c test/clang_funcs.c -o test/clang_funcs.o
+    gcc -o tmp tmp.s test/clang_funcs.o
+}
+
 try() {
     expected="$1"
     input="$2"
+    with_funcs="$3"
 
     ./kcc "$input" > tmp.s
-    gcc -o tmp tmp.s
+    if [ "$with_funcs" = "cf" ]; then
+        build_binary_with_cfuncs
+    else
+        build_binary
+    fi
     ./tmp
     actual="$?"
 
@@ -62,4 +76,6 @@ try 5 'loop=0;for(i=0;i<5;i=i+1) loop=loop+1; return loop;'
 echo "for syntax OK"
 try 15 'l1=0;l2=0;for (a=0; a<5; a=a+1) {l1=l1+1;l2=l2+2;} return l1+l2;'
 echo "braces block OK"
+try 11 'return10() + 1;' cf
+try 28 '7 + add6(5,4,3,2,1,0);' cf
 echo OK

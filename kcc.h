@@ -25,6 +25,7 @@
 #define FOR "for"
 #define BRACES_START "{"
 #define BRACES_END "}"
+#define WITH ","
 
 typedef enum {
     TOKEN_RESERVED,
@@ -36,6 +37,7 @@ typedef enum {
 typedef struct Token Token;
 typedef struct Node Node;
 typedef struct LocalVar LocalVar;
+typedef struct Function Function;
 
 struct Token {
     TokenCategory category;
@@ -66,6 +68,8 @@ typedef enum {
     NODE_WHILE,
     NODE_FOR,
     NODE_BLOCK,
+    NODE_CALL_FUNCTION,
+    NODE_ARGUMENT,
 } NodeCategory;
 
 struct Node {
@@ -74,6 +78,7 @@ struct Node {
     Node *rhs;
     int value;
     LocalVar *var;
+    Function *func;
 };
 
 struct LocalVar {
@@ -81,6 +86,11 @@ struct LocalVar {
     char *name;
     int len;
     int offset;
+};
+
+struct Function {
+    char *name;
+    int len;
 };
 
 

@@ -2,6 +2,14 @@
 
 int syntax_number;
 char *node2str(Node *node);
+char argument_register[10][10] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+char func_name[10];
+
+char *get_func_name(Node *node) {
+    strncpy(func_name, node->func->name, node->func->len);
+    func_name[node->func->len] = '\0';
+    return func_name;
+}
 
 void generate_local_value(Node *local_value_node) {
     if (local_value_node->category != NODE_LOCAL_VALUE) {
@@ -89,6 +97,17 @@ void generate(Node *node) {
             for (Node *stmt = node; stmt->lhs != NULL; stmt = stmt->rhs) {
                 generate(stmt->lhs);
             }
+            return;
+        }
+        case NODE_CALL_FUNCTION: {
+            int arg_num = 0;
+            for (Node *arg_node = node->rhs; arg_node != NULL; arg_node = arg_node->rhs) {
+                generate(arg_node->lhs);
+                printf("  pop %s\n", argument_register[arg_num]);
+                arg_num++;
+            }
+            printf("  call _%s\n", get_func_name(node));
+            printf("  push rax\n");
             return;
         }
         default:
@@ -297,6 +316,17 @@ char *node2str(Node *node) {
         }
         case NODE_BLOCK: {
             strcpy(nodestr, "block");
+            return nodestr;
+        }
+        case NODE_CALL_FUNCTION: {
+            char func_name[10];
+            strncpy(func_name, node->func->name, node->func->len);
+            func_name[node->func->len] = '\0';
+            sprintf(nodestr, "call function: %s", func_name);
+            return nodestr;
+        }
+        case NODE_ARGUMENT: {
+            strcpy(nodestr, "argument");
             return nodestr;
         }
         default: {

@@ -326,7 +326,7 @@ Node *statement() {
 }
 
 /**
- * declaration = ident "(" ")" statement
+ * declaration = ident "(" (ident ("," ident)*)? ")" statement
 **/
 Node *declaration() {
     Node *function_node = init_node(NODE_DEFINE_FUNCTION);
@@ -336,7 +336,18 @@ Node *declaration() {
     current_function->len = function_token->len;
     function_node->func = current_function;
     expect(PARENTHESES_START);
-    expect(PARENTHESES_END);
+    if (!consume_reserved(PARENTHESES_END)) {
+        Node *head = init_node(NODE_ARGUMENT);
+        head->lhs = new_node_local_value(consume_identifier());
+        Node *current = head;
+        while (consume_reserved(WITH)) {
+            current->rhs = init_node(NODE_ARGUMENT);
+            current = current->rhs;
+            current->lhs = new_node_local_value(consume_identifier());
+        }
+        function_node->lhs = head;
+        expect(PARENTHESES_END);
+    }
     function_node->rhs = statement();
     return function_node;
 }

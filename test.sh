@@ -80,5 +80,6 @@ try 11 'main() {return10() + 1;}' cf
 try 28 'main() {7 + add6(5,4,3,2,1,0);}' cf
 echo "calling C-language functions OK"
 try 10 'f() {return 10;} main() {return f();}'
+try 120 'f(a,b,c,d) {return a*b*c*d;} main() {return f(2,3,4,5);}'
 echo "define function OK"
 echo OK

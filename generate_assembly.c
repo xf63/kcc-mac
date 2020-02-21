@@ -118,6 +118,14 @@ void generate(Node *node) {
             if (node->func->last != NULL) {
                 printf("  sub rsp, %d\n", node->func->last->offset);
             }
+            int arg_num = 0;
+            for (Node *arg_node = node->lhs; arg_node != NULL; arg_node = arg_node->rhs) {
+                generate_local_value(arg_node->lhs);
+                printf("  pop rax\n");
+                printf("  mov [rax], %s\n", argument_register[arg_num]);
+                printf("  push %s\n", argument_register[arg_num]);
+                arg_num++;
+            }
             generate(node->rhs);
             printf("  pop rax\n");
             printf("Lend%s:\n", get_func_name(node));

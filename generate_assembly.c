@@ -124,8 +124,8 @@ void generate(Node *node) {
             }
             int arg_num = 0;
             for (Node *arg_node = node->lhs; arg_node != NULL; arg_node = arg_node->rhs) {
-                generate_local_value(arg_node->lhs);
-                printf("  pop rax\n");
+                printf("  mov rax, rbp\n");
+                printf("  sub rax, %d\n", arg_node->lhs->var->offset);
                 printf("  mov [rax], %s\n", argument_register[arg_num]);
                 printf("  push %s\n", argument_register[arg_num]);
                 arg_num++;
@@ -145,6 +145,9 @@ void generate(Node *node) {
         }
         case NODE_ADDRESS_OF: {
             generate_local_value(node->rhs);
+            return;
+        }
+        case NODE_DEFINE_VARIABLE: {
             return;
         }
         default:
@@ -361,6 +364,10 @@ char *node2str(Node *node) {
         }
         case NODE_ADDRESS_OF: {
             strcpy(nodestr, "address of");
+            return nodestr;
+        }
+        case NODE_DEFINE_VARIABLE: {
+            sprintf(nodestr, "define variable offset: %d", node->var->offset);
             return nodestr;
         }
         default: {

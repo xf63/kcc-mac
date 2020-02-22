@@ -67,7 +67,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (memcmp(p, FOR, 3) == 0 && !is_alphabet_or_number(p[3])) {
+        if ((memcmp(p, FOR, 3) == 0 || memcmp(p, TYPE_INT, 3) == 0) && !is_alphabet_or_number(p[3])) {
             current = new_token(TOKEN_RESERVED, current, p, 3);
             p = p + 3;
             continue;

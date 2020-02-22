@@ -1,4 +1,11 @@
 #include "kcc.h"
+bool peek_reserved(char *operator) {
+    if (token->category != TOKEN_RESERVED || strlen(operator) != token->len
+    || memcmp(token->str, operator, token->len) != 0) {
+        return false;
+    }
+    return true;
+}
 
 bool consume_reserved(char *operator) {
     if (token->category != TOKEN_RESERVED || strlen(operator) != token->len
@@ -9,7 +16,7 @@ bool consume_reserved(char *operator) {
     return true;
 }
 
-void expect(char *operator) {
+void expect_reserved(char *operator) {
     if (token->category != TOKEN_RESERVED || strlen(operator) != token->len
     || memcmp(token->str, operator, token->len) != 0) {
         error_at(token->str, "%s is expected", operator);
@@ -82,25 +89,13 @@ Token *expect_identifier() {
 
 Node *new_node_local_value(Token *identifier_token) {
     LocalVar *var = checkAlreadyAllocated(identifier_token);
+    if (var == NULL) {
+        char variable_name[10];
+        strncpy(variable_name, identifier_token->str, identifier_token->len);
+        variable_name[identifier_token->len] = '\0';
+        error_at(identifier_token->str, "%s has not been defined", variable_name);
+    }
     Node *identifier_node = init_node(NODE_LOCAL_VALUE);
-    if (var != NULL) {
-        identifier_node->var = var;
-        return identifier_node;
-    }
-    var = calloc(1, sizeof(LocalVar));
-    var->name = identifier_token->str;
-    var->len = identifier_token->len;
-
-    int default_offset = 0;
-    if (current_function->last != NULL) {
-        default_offset = current_function->last->offset;
-        current_function->last->next = var;
-    }
-    var->offset = default_offset + 8;
-    current_function->last = var;
-    if (current_function->first == NULL) {
-        current_function->first = var;
-    }
     identifier_node->var = var;
     return identifier_node;
 }
@@ -114,7 +109,7 @@ Node *expression();
 Node *primary() {
     if (consume_reserved(PARENTHESES_START)) {
         Node *inside_parentheses = expression();
-        expect(PARENTHESES_END);
+        expect_reserved(PARENTHESES_END);
         return inside_parentheses;
     }
     Token *identifier_token = consume_identifier();
@@ -135,7 +130,7 @@ Node *primary() {
                     current->lhs = expression();
                 }
                 func_call_node->lhs = head;
-                expect(PARENTHESES_END);
+                expect_reserved(PARENTHESES_END);
             }
             return func_call_node;
         }
@@ -264,25 +259,58 @@ Node *expression() {
 }
 
 /**
+ * definition = "int" ident
+**/
+Node *definition() {
+    expect_reserved(TYPE_INT);
+    Token *identifier_token = expect_identifier();
+    LocalVar *var = checkAlreadyAllocated(identifier_token);
+    if (var != NULL) {
+        char variable_name[10];
+        strncpy(variable_name, var->name, var->len);
+        variable_name[var->len] = '\0';
+        error_at(var->name, "%s is already defined", variable_name);
+    }
+    Node *variable_definition_node = init_node(NODE_DEFINE_VARIABLE);
+    var = calloc(1, sizeof(LocalVar));
+    var->name = identifier_token->str;
+    var->len = identifier_token->len;
+
+    int default_offset = 0;
+    if (current_function->last != NULL) {
+        default_offset = current_function->last->offset;
+        current_function->last->next = var;
+    }
+    var->offset = default_offset + 8;
+    current_function->last = var;
+    if (current_function->first == NULL) {
+        current_function->first = var;
+    }
+    variable_definition_node->var = var;
+    return variable_definition_node;
+}
+
+/**
  * statement = expression ";" |
  *              "return" expression ";" |
  *              "if" "(" equality ")" statement ("else" statement)? |
  *              "while" "(" equality ")" statement |
- *              "for" "(" (assign)? ";" (equality)? ";" (assign)? ")" statement
- *              "{" statement* "}"
+ *              "for" "(" (assign)? ";" (equality)? ";" (assign)? ")" statement |
+ *              "{" statement* "}" |
+ *              definition ";"
 **/
 Node *statement() {
     Node *lhs;
     if (consume_reserved(RETURN)) {
         lhs = new_node(NODE_RETURN, NULL, expression());
-        expect(END);
+        expect_reserved(END);
         lhs->func = current_function;
         return lhs;
     }
     if (consume_reserved(IF)) {
-        expect(PARENTHESES_START);
+        expect_reserved(PARENTHESES_START);
         lhs = equality();
-        expect(PARENTHESES_END);
+        expect_reserved(PARENTHESES_END);
         Node *rhs = statement();
         if (!consume_reserved(ELSE)) {
             return new_node(NODE_IF, lhs, rhs);
@@ -293,26 +321,26 @@ Node *statement() {
         return new_node(NODE_IF, lhs, else_node);
     }
     if (consume_reserved(WHILE)) {
-        expect(PARENTHESES_START);
+        expect_reserved(PARENTHESES_START);
         lhs = equality();
-        expect(PARENTHESES_END);
+        expect_reserved(PARENTHESES_END);
         return new_node(NODE_WHILE, lhs, statement());
     }
     if (consume_reserved(FOR)) {
-        expect(PARENTHESES_START);
+        expect_reserved(PARENTHESES_START);
         Node *init_check_node = init_node(NODE_FOR);
         Node *increment_execute_node = init_node(NODE_FOR);
         if (!consume_reserved(END)) {
             init_check_node->lhs = assign();
-            expect(END);
+            expect_reserved(END);
         }
         if (!consume_reserved(END)) {
             init_check_node->rhs = equality();
-            expect(END);
+            expect_reserved(END);
         }
         if (!consume_reserved(PARENTHESES_END)) {
             increment_execute_node->lhs = assign();
-            expect(PARENTHESES_END);
+            expect_reserved(PARENTHESES_END);
         }
         increment_execute_node->rhs = statement();
         return new_node(NODE_FOR, init_check_node, increment_execute_node);
@@ -327,33 +355,40 @@ Node *statement() {
         }
         return brace_top_node;
     }
+    if (peek_reserved(TYPE_INT)) {
+        lhs = definition();
+        expect_reserved(END);
+        return lhs;
+    }
     lhs = expression();
-    expect(END);
+    expect_reserved(END);
     return lhs;
 }
 
+
 /**
- * declaration = ident "(" (ident ("," ident)*)? ")" statement
+ * declaration = "int" ident "(" (definition ("," definition)*)? ")" statement
 **/
 Node *declaration() {
+    expect_reserved(TYPE_INT);
     Node *function_node = init_node(NODE_DEFINE_FUNCTION);
     current_function = calloc(1, sizeof(Function));
     Token *function_token = expect_identifier();
     current_function->name = function_token->str;
     current_function->len = function_token->len;
     function_node->func = current_function;
-    expect(PARENTHESES_START);
+    expect_reserved(PARENTHESES_START);
     if (!consume_reserved(PARENTHESES_END)) {
         Node *head = init_node(NODE_ARGUMENT);
-        head->lhs = new_node_local_value(consume_identifier());
+        head->lhs = definition();
         Node *current = head;
         while (consume_reserved(WITH)) {
             current->rhs = init_node(NODE_ARGUMENT);
             current = current->rhs;
-            current->lhs = new_node_local_value(consume_identifier());
+            current->lhs = definition();
         }
         function_node->lhs = head;
-        expect(PARENTHESES_END);
+        expect_reserved(PARENTHESES_END);
     }
     function_node->rhs = statement();
     return function_node;

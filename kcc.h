@@ -28,6 +28,7 @@
 #define WITH ","
 #define DEREFERENCE "*"
 #define ADDRESS_OF "&"
+#define TYPE_INT "int"
 
 typedef enum {
     TOKEN_RESERVED,
@@ -75,6 +76,7 @@ typedef enum {
     NODE_DEFINE_FUNCTION,
     NODE_DEREFERENCE,
     NODE_ADDRESS_OF,
+    NODE_DEFINE_VARIABLE,
 } NodeCategory;
 
 struct Node {

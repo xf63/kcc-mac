@@ -145,7 +145,8 @@ Node *primary() {
 }
 
 /**
- * unary = ("+" | "-")? primary
+ * unary = ("+" | "-")? primary |
+ *          ("*" | "&") unary
 **/
 Node *unary() {
     if (consume_reserved(PLUS)) {
@@ -153,6 +154,12 @@ Node *unary() {
     }
     if (consume_reserved(MINUS)) {
         return new_node(NODE_SUB, new_node_number(0), primary());
+    }
+    if (consume_reserved(DEREFERENCE)) {
+        return new_node(NODE_DEREFERENCE, NULL, unary());
+    }
+    if (consume_reserved(ADDRESS_OF)) {
+        return new_node(NODE_ADDRESS_OF, NULL, unary());
     }
     return primary();
 }

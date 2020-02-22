@@ -20,6 +20,12 @@ void generate_local_value(Node *local_value_node) {
     printf("  push rax\n");
 }
 
+void load() {
+    printf("  pop rax\n");
+    printf("  mov rax, [rax]\n");
+    printf("  push rax\n");
+}
+
 void generate(Node *node) {
     if (node == NULL) {
         return;
@@ -27,9 +33,7 @@ void generate(Node *node) {
     switch (node->category) {
         case NODE_LOCAL_VALUE:
             generate_local_value(node);
-            printf("  pop rax\n");
-            printf("  mov rax, [rax]\n");
-            printf("  push rax\n");
+            load();
             return;
         case NODE_ASSIGN:
             generate_local_value(node->lhs);
@@ -132,6 +136,15 @@ void generate(Node *node) {
             printf("  mov rsp, rbp\n");
             printf("  pop rbp\n");
             printf("  ret\n");
+            return;
+        }
+        case NODE_DEREFERENCE: {
+            generate(node->rhs);
+            load();
+            return;
+        }
+        case NODE_ADDRESS_OF: {
+            generate_local_value(node->rhs);
             return;
         }
         default:
@@ -340,6 +353,14 @@ char *node2str(Node *node) {
         }
         case NODE_ARGUMENT: {
             strcpy(nodestr, "argument");
+            return nodestr;
+        }
+        case NODE_DEREFERENCE: {
+            strcpy(nodestr, "dereference");
+            return nodestr;
+        }
+        case NODE_ADDRESS_OF: {
+            strcpy(nodestr, "address of");
             return nodestr;
         }
         default: {

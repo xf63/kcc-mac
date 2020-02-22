@@ -82,4 +82,7 @@ echo "calling C-language functions OK"
 try 10 'f() {return 10;} main() {return f();}'
 try 120 'f(a,b,c,d) {return a*b*c*d;} main() {return f(2,3,4,5);}'
 echo "define function OK"
+try 3 'main() {x=3;y=&x;return *y;}'
+try 14 'main() {x=14;y=5;z=&y+8;return *z;}'
+echo "adress access OK"
 echo OK

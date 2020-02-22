@@ -26,6 +26,8 @@
 #define BRACES_START "{"
 #define BRACES_END "}"
 #define WITH ","
+#define DEREFERENCE "*"
+#define ADDRESS_OF "&"
 
 typedef enum {
     TOKEN_RESERVED,
@@ -71,6 +73,8 @@ typedef enum {
     NODE_CALL_FUNCTION,
     NODE_ARGUMENT,
     NODE_DEFINE_FUNCTION,
+    NODE_DEREFERENCE,
+    NODE_ADDRESS_OF,
 } NodeCategory;
 
 struct Node {

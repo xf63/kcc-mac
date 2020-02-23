@@ -4,4 +4,5 @@ tmp*
 kcc
 *.dSYM
 *.dSYM/*
+.vscode
 c_cpp_properties.json

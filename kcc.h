@@ -29,6 +29,7 @@
 #define DEREFERENCE "*"
 #define ADDRESS_OF "&"
 #define TYPE_INT "int"
+#define POINTER "*"
 
 typedef enum {
     TOKEN_RESERVED,
@@ -41,6 +42,7 @@ typedef struct Token Token;
 typedef struct Node Node;
 typedef struct LocalVar LocalVar;
 typedef struct Function Function;
+typedef struct Type Type;
 
 struct Token {
     TokenCategory category;
@@ -86,9 +88,11 @@ struct Node {
     int value;
     LocalVar *var;
     Function *func;
+    Type *type;
 };
 
 struct LocalVar {
+    Type *type;
     LocalVar *next;
     char *name;
     int len;
@@ -101,6 +105,22 @@ struct Function {
     LocalVar *first;
     LocalVar *last;
 };
+
+typedef enum {
+    INTEGER_TYPE,
+    POINTER_TYPE,
+} TypeCategory;
+
+struct Type {
+    TypeCategory category;
+    int size;
+    Type *point_to;
+};
+
+Type *int_type;
+Type *pointer_to(Type* base);
+bool is_integer(Type *type);
+bool is_pointer(Type *type);
 
 Node *top_nodes[100];
 

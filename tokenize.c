@@ -90,7 +90,8 @@ Token *tokenize(char *p) {
         || prefix_match(p, GREATER_THAN) || prefix_match(p, LESS_THAN) 
         || prefix_match(p, ASSIGN) || prefix_match(p, END) || prefix_match(p, WITH)
         || prefix_match(p, BRACES_START) || prefix_match(p, BRACES_END)
-        || prefix_match(p, DEREFERENCE) || prefix_match(p, ADDRESS_OF)) {
+        || prefix_match(p, DEREFERENCE) || prefix_match(p, ADDRESS_OF)
+        || prefix_match(p, POINTER)) {
             current = new_token(TOKEN_RESERVED, current, p, 1);
             p++;
             continue;

@@ -33,6 +33,15 @@ int expect_number() {
     return value;
 }
 
+Type *expect_type() {
+    expect_reserved(TYPE_INT);
+    Type *type = int_type;
+    while (consume_reserved(POINTER)) {
+        type = pointer_to(type);
+    }
+    return type;
+}
+
 bool is_at_eof() {
     return token->category == TOKEN_EOF;
 }
@@ -44,6 +53,7 @@ Node *init_node(NodeCategory category) {
     node->rhs = NULL;
     node->var = NULL;
     node->func = NULL;
+    node->type = NULL;
     return node;
 }
 
@@ -51,6 +61,9 @@ Node *new_node(NodeCategory category, Node *lhs, Node *rhs) {
     Node *node = init_node(category);
     node->lhs = lhs;
     node->rhs = rhs;
+    if (lhs != NULL && lhs->type != NULL) {
+        node->type = lhs->type;
+    }
     return node;
 }
 
@@ -97,6 +110,7 @@ Node *new_node_local_value(Token *identifier_token) {
     }
     Node *identifier_node = init_node(NODE_LOCAL_VALUE);
     identifier_node->var = var;
+    identifier_node->type = var->type;
     return identifier_node;
 }
 
@@ -259,10 +273,10 @@ Node *expression() {
 }
 
 /**
- * definition = "int" ident
+ * definition = type ident
 **/
 Node *definition() {
-    expect_reserved(TYPE_INT);
+    Type *type = expect_type();
     Token *identifier_token = expect_identifier();
     LocalVar *var = checkAlreadyAllocated(identifier_token);
     if (var != NULL) {
@@ -275,13 +289,13 @@ Node *definition() {
     var = calloc(1, sizeof(LocalVar));
     var->name = identifier_token->str;
     var->len = identifier_token->len;
-
+    var->type = type;
     int default_offset = 0;
     if (current_function->last != NULL) {
         default_offset = current_function->last->offset;
         current_function->last->next = var;
     }
-    var->offset = default_offset + 8;
+    var->offset = default_offset + var->type->size;
     current_function->last = var;
     if (current_function->first == NULL) {
         current_function->first = var;
@@ -367,16 +381,17 @@ Node *statement() {
 
 
 /**
- * declaration = "int" ident "(" (definition ("," definition)*)? ")" statement
+ * declaration = type ident "(" (definition ("," definition)*)? ")" statement
 **/
 Node *declaration() {
-    expect_reserved(TYPE_INT);
+    Type *type = expect_type();
     Node *function_node = init_node(NODE_DEFINE_FUNCTION);
     current_function = calloc(1, sizeof(Function));
     Token *function_token = expect_identifier();
     current_function->name = function_token->str;
     current_function->len = function_token->len;
     function_node->func = current_function;
+    function_node->type = type;
     expect_reserved(PARENTHESES_START);
     if (!consume_reserved(PARENTHESES_END)) {
         Node *head = init_node(NODE_ARGUMENT);

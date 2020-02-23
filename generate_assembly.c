@@ -2,7 +2,8 @@
 
 int syntax_number;
 char *node2str(Node *node);
-char argument_register[10][10] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+void generate(Node *node);
+char argument_register_8byte[10][10] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 char func_name[10];
 
 char *get_func_name(Node *node) {
@@ -11,19 +12,27 @@ char *get_func_name(Node *node) {
     return func_name;
 }
 
-void generate_local_value(Node *local_value_node) {
-    if (local_value_node->category != NODE_LOCAL_VALUE) {
-        error("local value expected, but got %s", node2str(local_value_node));
-    }
-    printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", local_value_node->var->offset);
-    printf("  push rax\n");
-}
-
 void load() {
     printf("  pop rax\n");
     printf("  mov rax, [rax]\n");
     printf("  push rax\n");
+}
+
+void generate_stack_value(Node *node) {
+    switch (node->category) {
+        case NODE_LOCAL_VALUE: {
+            printf("  mov rax, rbp\n");
+            printf("  sub rax, %d\n", node->var->offset);
+            printf("  push rax\n");
+            return;
+        }
+        case NODE_DEREFERENCE: {
+            generate(node->rhs);
+            return;
+        }
+        default:
+            error("local value or address expected, but got %s", node2str(node));
+    }
 }
 
 void generate(Node *node) {
@@ -32,11 +41,11 @@ void generate(Node *node) {
     }
     switch (node->category) {
         case NODE_LOCAL_VALUE:
-            generate_local_value(node);
+            generate_stack_value(node);
             load();
             return;
         case NODE_ASSIGN:
-            generate_local_value(node->lhs);
+            generate_stack_value(node->lhs);
             generate(node->rhs);
             printf("  pop rdi\n");
             printf("  pop rax\n");
@@ -107,7 +116,7 @@ void generate(Node *node) {
             int arg_num = 0;
             for (Node *arg_node = node->lhs; arg_node != NULL; arg_node = arg_node->rhs) {
                 generate(arg_node->lhs);
-                printf("  pop %s\n", argument_register[arg_num]);
+                printf("  pop %s\n", argument_register_8byte[arg_num]);
                 arg_num++;
             }
             printf("  call _%s\n", get_func_name(node));
@@ -126,8 +135,8 @@ void generate(Node *node) {
             for (Node *arg_node = node->lhs; arg_node != NULL; arg_node = arg_node->rhs) {
                 printf("  mov rax, rbp\n");
                 printf("  sub rax, %d\n", arg_node->lhs->var->offset);
-                printf("  mov [rax], %s\n", argument_register[arg_num]);
-                printf("  push %s\n", argument_register[arg_num]);
+                printf("  mov [rax], %s\n", argument_register_8byte[arg_num]);
+                printf("  push %s\n", argument_register_8byte[arg_num]);
                 arg_num++;
             }
             generate(node->rhs);
@@ -144,7 +153,7 @@ void generate(Node *node) {
             return;
         }
         case NODE_ADDRESS_OF: {
-            generate_local_value(node->rhs);
+            generate_stack_value(node->rhs);
             return;
         }
         case NODE_DEFINE_VARIABLE: {
@@ -315,7 +324,7 @@ char *node2str(Node *node) {
             return nodestr;
         }
         case NODE_LOCAL_VALUE: {
-            sprintf(nodestr, "local value offset : %d", node->var->offset);
+            sprintf(nodestr, "local value offset : %d, size : %d", node->var->offset, node->type->size);
             return nodestr;
         }
         case NODE_ASSIGN: {

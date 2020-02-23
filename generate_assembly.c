@@ -142,6 +142,9 @@ void generate(Node *node) {
             return;
         }
         case NODE_DEFINE_FUNCTION: {
+            if (node->rhs == NULL) {
+                return;
+            }
             printf("_%s:\n", get_func_name(node));
             printf("  push rbp\n");
             printf("  mov rbp, rsp\n");
@@ -188,17 +191,45 @@ void generate(Node *node) {
             printf("  push %d\n", node->value);
             return;
         }
-        case NODE_ADD: {
+        case NODE_ADD_INTEGER: {
             printf("  pop rdi\n");
             printf("  pop rax\n");
             printf("  add rax, rdi\n");
             printf("  push rax\n");
             return;
         }
-        case NODE_SUB: {
+        case NODE_ADD_POINTER: {
+            printf("  pop rax\n");
+            printf("  mov rdi, %d\n", node->lhs->type->point_to->size); // rdi = size of left hand side
+            printf("  mul rdi\n"); // rax = rax * rdi
+            printf("  pop rdi\n");
+            printf("  add rdi, rax\n");
+            printf("  push rdi\n");
+            return;
+        }
+        case NODE_SUB_INTEGER: {
             printf("  pop rdi\n");
             printf("  pop rax\n");
             printf("  sub rax, rdi\n");
+            printf("  push rax\n");
+            return;
+        }
+        case NODE_SUB_POINTER: {
+            printf("  pop rax\n");
+            printf("  mov rdi, %d\n", node->lhs->type->point_to->size); // rdi = size of left hand side
+            printf("  mul rdi\n"); // rax = rax * rdi
+            printf("  pop rdi\n");
+            printf("  sub rdi, rax\n");
+            printf("  push rdi\n");
+            return;
+        }
+        case NODE_DIFF_POINTER: {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
+            printf("  sub rax, rdi\n");
+            printf("  mov rdi, %d\n", node->lhs->type->size); // rdi = size of left hand side
+            printf("  cqo\n");
+            printf("  idiv rdi\n");
             printf("  push rax\n");
             return;
         }
@@ -300,12 +331,24 @@ char *node2str(Node *node) {
         return nodestr;
     }
     switch (node->category) {
-        case NODE_ADD: {
+        case NODE_ADD_INTEGER: {
             strcpy(nodestr, "(+)");
             return nodestr;
         }
-        case NODE_SUB: {
+        case NODE_ADD_POINTER: {
+            sprintf(nodestr, "(+) pointer + int * %d", node->lhs->type->point_to->size);
+            return nodestr;
+        }
+        case NODE_SUB_INTEGER: {
             strcpy(nodestr, "(-)");
+            return nodestr;
+        }
+        case NODE_SUB_POINTER: {
+            sprintf(nodestr, "(-) pointer - int * %d", node->lhs->type->point_to->size);
+            return nodestr;
+        }
+        case NODE_DIFF_POINTER: {
+            strcpy(nodestr, "(-) between pointer");
             return nodestr;
         }
         case NODE_MUL: {

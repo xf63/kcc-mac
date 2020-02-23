@@ -61,7 +61,7 @@ Node *new_node(NodeCategory category, Node *lhs, Node *rhs) {
     Node *node = init_node(category);
     node->lhs = lhs;
     node->rhs = rhs;
-    if (lhs != NULL && lhs->type != NULL) {
+    if (lhs != NULL) {
         node->type = lhs->type;
     }
     return node;
@@ -70,10 +70,20 @@ Node *new_node(NodeCategory category, Node *lhs, Node *rhs) {
 Node *new_node_number(int number) {
     Node *node = init_node(NODE_VAL);
     node->value = number;
+    node->type = int_type;
     return node;
 }
 
-LocalVar *checkAlreadyAllocated(Token *identifier_token) {
+Function *checkFunctionDefined(Token *identifier_token) {
+    for (Function *func = first_function; func != NULL; func = func->next) {
+        if (identifier_token->len == func->len && memcmp(identifier_token->str, func->name, func->len) == 0) {
+            return func;
+        }
+    }
+    return NULL;
+}
+
+LocalVar *checkVariableAllocated(Token *identifier_token) {
     for (LocalVar *var = current_function->first; var != NULL; var = var->next) {
         if (identifier_token->len == var->len && memcmp(identifier_token->str, var->name, var->len) == 0) {
             return var;
@@ -101,7 +111,7 @@ Token *expect_identifier() {
 }
 
 Node *new_node_local_value(Token *identifier_token) {
-    LocalVar *var = checkAlreadyAllocated(identifier_token);
+    LocalVar *var = checkVariableAllocated(identifier_token);
     if (var == NULL) {
         char variable_name[10];
         strncpy(variable_name, identifier_token->str, identifier_token->len);
@@ -130,10 +140,14 @@ Node *primary() {
     if (identifier_token != NULL) {
         if (consume_reserved(PARENTHESES_START)) {
             Node *func_call_node = init_node(NODE_CALL_FUNCTION);
-            Function *called_func = calloc(1, sizeof(Function));
+            Function *called_func = checkFunctionDefined(identifier_token);
+            if (called_func == NULL) {
+                error_at(identifier_token->str, "undefined function");
+            }
             called_func->name = identifier_token->str;
             called_func->len = identifier_token->len;
             func_call_node->func = called_func;
+            func_call_node->type = called_func->type;
             Node *head = init_node(NODE_ARGUMENT);
             Node *current = head;
             if (!consume_reserved(PARENTHESES_END)) {
@@ -162,7 +176,7 @@ Node *unary() {
         return primary();
     }
     if (consume_reserved(MINUS)) {
-        return new_node(NODE_SUB, new_node_number(0), primary());
+        return new_node(NODE_SUB_INTEGER, new_node_number(0), primary());
     }
     if (consume_reserved(DEREFERENCE)) {
         Node *deref_node = new_node(NODE_DEREFERENCE, NULL, unary());
@@ -171,7 +185,7 @@ Node *unary() {
     }
     if (consume_reserved(ADDRESS_OF)) {
         Node *address_node = new_node(NODE_ADDRESS_OF, NULL, unary());
-        address_node->type = pointer_to(address_node->type);
+        address_node->type = pointer_to(address_node->rhs->type);
         return address_node;
     }
     return primary();
@@ -196,18 +210,58 @@ Node *multiplicative() {
     
 }
 
+Node *cross_type_addition(Node* lhs, Node*rhs, Token *addition_token) {
+    if (lhs->type == NULL) {
+        error_at(addition_token->str, "cannot refine type of left hand side");
+    }
+    if (rhs->type == NULL) {
+        error_at(addition_token->str, "cannot refine type of right hand side");
+    }
+    if (is_integer(lhs->type) && is_integer(rhs->type)) {
+        return new_node(NODE_ADD_INTEGER, lhs, rhs);
+    }
+    if (is_pointer(lhs->type) && is_integer(rhs->type)) {
+        return new_node(NODE_ADD_POINTER, lhs, rhs);
+    }
+    if (is_integer(lhs->type) && is_pointer(rhs->type)) {
+        return new_node(NODE_ADD_POINTER, rhs, lhs);
+    }
+    error_at(addition_token->str, "addition between these type is not defined");
+}
+
+Node *cross_type_subtraction(Node* lhs, Node*rhs, Token *subtraction_token) {
+    if (lhs->type == NULL) {
+        error_at(subtraction_token->str, "cannot refine type of left hand side");
+    }
+    if (rhs->type == NULL) {
+        error_at(subtraction_token->str, "cannot refine type of right hand side");
+    }
+    if (is_integer(lhs->type) && is_integer(rhs->type)) {
+        return new_node(NODE_SUB_INTEGER, lhs, rhs);
+    }
+    if (is_pointer(lhs->type) && is_integer(rhs->type)) {
+        return new_node(NODE_SUB_POINTER, lhs, rhs);
+    }
+    if (is_pointer(lhs->type) && is_pointer(rhs->type)) {
+        return new_node(NODE_DIFF_POINTER, rhs, lhs);
+    }
+    error_at(subtraction_token->str, "subtraction between these type is not defined");
+    return NULL;
+}
+
 /**
  * additive = multiplicative ("+" multiplicative | "-" multiplicative)*
 **/
 Node *additive() {
     Node *lhs = multiplicative();
     while (true) {
+        Token *operator_token = token;
         if (consume_reserved(PLUS)) {
-            lhs = new_node(NODE_ADD, lhs, multiplicative());
+            lhs = cross_type_addition(lhs, multiplicative(), operator_token);
             continue;
         }
         if (consume_reserved(MINUS)) {
-            lhs = new_node(NODE_SUB, lhs, multiplicative());
+            lhs = new_node(NODE_SUB_INTEGER, lhs, multiplicative());
             continue;
         }
         return lhs;
@@ -263,8 +317,15 @@ Node *equality() {
 **/
 Node *assign() {
     Node *lhs = equality();
+    Token *assign_token = token;
     if (consume_reserved(ASSIGN)) {
         lhs = new_node(NODE_ASSIGN, lhs, assign());
+        if (lhs->lhs->type == NULL || lhs->rhs->type == NULL) {
+            error_at(assign_token->str, "type cannot be refined");
+        }
+        if (lhs->lhs->type->size != lhs->rhs->type->size) {
+            error_at(assign_token->str, "type does not match");
+        }
     }
     return lhs;
 }
@@ -282,7 +343,7 @@ Node *expression() {
 Node *definition() {
     Type *type = expect_type();
     Token *identifier_token = expect_identifier();
-    LocalVar *var = checkAlreadyAllocated(identifier_token);
+    LocalVar *var = checkVariableAllocated(identifier_token);
     if (var != NULL) {
         char variable_name[10];
         strncpy(variable_name, var->name, var->len);
@@ -391,8 +452,16 @@ Node *statement() {
 Node *declaration() {
     Type *type = expect_type();
     Node *function_node = init_node(NODE_DEFINE_FUNCTION);
-    current_function = calloc(1, sizeof(Function));
+    if (current_function == NULL) {
+        current_function = calloc(1, sizeof(Function));
+        first_function = current_function;        
+    }
+    else {
+        current_function->next = calloc(1, sizeof(Function));
+        current_function = current_function->next;
+    }
     Token *function_token = expect_identifier();
+    current_function->type = type;
     current_function->name = function_token->str;
     current_function->len = function_token->len;
     function_node->func = current_function;
@@ -409,6 +478,9 @@ Node *declaration() {
         }
         function_node->lhs = head;
         expect_reserved(PARENTHESES_END);
+    }
+    if (consume_reserved(END)) {
+        return function_node;
     }
     function_node->rhs = statement();
     return function_node;

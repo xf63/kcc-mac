@@ -55,8 +55,11 @@ struct Token {
 Token *token;
 typedef enum {
     NODE_VAL,
-    NODE_ADD,
-    NODE_SUB,
+    NODE_ADD_INTEGER,
+    NODE_ADD_POINTER,
+    NODE_SUB_INTEGER,
+    NODE_SUB_POINTER,
+    NODE_DIFF_POINTER,
     NODE_MUL,
     NODE_DIV,
     NODE_EQUAL,
@@ -100,10 +103,12 @@ struct LocalVar {
 };
 
 struct Function {
+    Type *type;
     char *name;
     int len;
     LocalVar *first;
     LocalVar *last;
+    Function *next;
 };
 
 typedef enum {
@@ -126,6 +131,7 @@ Node *top_nodes[100];
 
 char *user_input;
 
+Function *first_function;
 Function *current_function;
 
 void error(char *fmt, ...);

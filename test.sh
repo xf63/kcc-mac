@@ -76,14 +76,14 @@ try 5 'int main() {int loop;loop=0;int i;for(i=0;i<5;i=i+1) loop=loop+1; return 
 echo "for syntax OK"
 try 15 'int main() {int l1;int l2;l1=0;l2=0;int a;for (a=0; a<5; a=a+1) {l1=l1+1;l2=l2+2;} return l1+l2;}'
 echo "braces block OK"
-try 11 'int main() {return10() + 1;}' cf
-try 28 'int main() {7 + add6(5,4,3,2,1,0);}' cf
+try 11 'int return10(); int main() {return10() + 1;}' cf
+try 28 'int add6(); int main() {7 + add6(5,4,3,2,1,0);}' cf
 echo "calling C-language functions OK"
 try 10 'int f() {return 10;} int main() {return f();}'
 try 120 'int f(int a,int b,int c,int d) {return a*b*c*d;} int main() {return f(2,3,4,5);}'
 echo "define function OK"
 try 3 'int main() {int x;int *y;x=3;y=&x;return *y;}'
-try 14 'int main() {int x;int y;int *z;x=14;y=5;z=&y+4;return *z;}'
+try 14 'int main() {int x;int y;int *z;x=14;y=5;z=&y+1;return *z;}'
 try 2 'int main() {int a;int *b; b=&a; *b=2; return a;}'
 echo "adress access OK"
 echo OK

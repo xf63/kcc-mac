@@ -86,4 +86,7 @@ try 3 'int main() {int x;int *y;x=3;y=&x;return *y;}'
 try 14 'int main() {int x;int y;int *z;x=14;y=5;z=&y+1;return *z;}'
 try 2 'int main() {int a;int *b; b=&a; *b=2; return a;}'
 echo "adress access OK"
+try 4 "int main() {int x; return sizeof(x);}"
+try 8 "int main() {int *y; return sizeof(y);}"
+echo "sizeof syntax OK"
 echo OK

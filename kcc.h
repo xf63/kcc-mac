@@ -30,6 +30,7 @@
 #define ADDRESS_OF "&"
 #define TYPE_INT "int"
 #define POINTER "*"
+#define SIZEOF "sizeof"
 
 typedef enum {
     TOKEN_RESERVED,

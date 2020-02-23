@@ -169,7 +169,8 @@ Node *primary() {
 
 /**
  * unary = ("+" | "-")? primary |
- *          ("*" | "&") unary
+ *          ("*" | "&") unary |
+ *          "sizeof" unary
 **/
 Node *unary() {
     if (consume_reserved(PLUS)) {
@@ -187,6 +188,9 @@ Node *unary() {
         Node *address_node = new_node(NODE_ADDRESS_OF, NULL, unary());
         address_node->type = pointer_to(address_node->rhs->type);
         return address_node;
+    }
+    if (consume_reserved(SIZEOF)) {
+        return new_node_number(unary()->type->size);
     }
     return primary();
 }

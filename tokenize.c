@@ -49,7 +49,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (memcmp(p, RETURN, 6) == 0 && !is_alphabet_or_number(p[6])) {
+        if ((memcmp(p, RETURN, 6) == 0 || memcmp(p, SIZEOF, 6) == 0) && !is_alphabet_or_number(p[6])) {
             current = new_token(TOKEN_RESERVED, current, p, 6);
             p = p + 6;
             continue;

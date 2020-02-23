@@ -108,7 +108,7 @@ Node *new_node_local_value(Token *identifier_token) {
         variable_name[identifier_token->len] = '\0';
         error_at(identifier_token->str, "%s has not been defined", variable_name);
     }
-    Node *identifier_node = init_node(NODE_LOCAL_VALUE);
+    Node *identifier_node = init_node(NODE_ACCESS_VARIABLE);
     identifier_node->var = var;
     identifier_node->type = var->type;
     return identifier_node;
@@ -165,10 +165,14 @@ Node *unary() {
         return new_node(NODE_SUB, new_node_number(0), primary());
     }
     if (consume_reserved(DEREFERENCE)) {
-        return new_node(NODE_DEREFERENCE, NULL, unary());
+        Node *deref_node = new_node(NODE_DEREFERENCE, NULL, unary());
+        deref_node->type = deref_node->rhs->type->point_to;
+        return deref_node;
     }
     if (consume_reserved(ADDRESS_OF)) {
-        return new_node(NODE_ADDRESS_OF, NULL, unary());
+        Node *address_node = new_node(NODE_ADDRESS_OF, NULL, unary());
+        address_node->type = pointer_to(address_node->type);
+        return address_node;
     }
     return primary();
 }
@@ -301,6 +305,7 @@ Node *definition() {
         current_function->first = var;
     }
     variable_definition_node->var = var;
+    variable_definition_node->type = var->type;
     return variable_definition_node;
 }
 

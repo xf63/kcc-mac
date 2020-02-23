@@ -82,8 +82,8 @@ echo "calling C-language functions OK"
 try 10 'int f() {return 10;} int main() {return f();}'
 try 120 'int f(int a,int b,int c,int d) {return a*b*c*d;} int main() {return f(2,3,4,5);}'
 echo "define function OK"
-try 3 'int main() {int x;int y;x=3;y=&x;return *y;}'
-try 14 'int main() {int x;int y;int *z;x=14;y=5;z=&y+8;return *z;}'
+try 3 'int main() {int x;int *y;x=3;y=&x;return *y;}'
+try 14 'int main() {int x;int y;int *z;x=14;y=5;z=&y+4;return *z;}'
 try 2 'int main() {int a;int *b; b=&a; *b=2; return a;}'
 echo "adress access OK"
 echo OK

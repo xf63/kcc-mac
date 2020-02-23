@@ -1,6 +1,6 @@
 #include "kcc.h"
 
-Type *int_type = &(Type){INTEGER_TYPE, 8, NULL};
+Type *int_type = &(Type){INTEGER_TYPE, 4, NULL};
 
 Type *pointer_to(Type *base) {
     Type *pointer = calloc(1, sizeof(Type));

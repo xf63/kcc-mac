@@ -4,6 +4,7 @@ int syntax_number;
 char *node2str(Node *node);
 void generate(Node *node);
 char argument_register_8byte[10][10] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+char argument_register_4byte[10][10] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 char func_name[10];
 
 char *get_func_name(Node *node) {
@@ -12,27 +13,47 @@ char *get_func_name(Node *node) {
     return func_name;
 }
 
-void load() {
+void load(Type *type) {
     printf("  pop rax\n");
-    printf("  mov rax, [rax]\n");
+    if (type->size == 4) {
+        printf("  mov eax, [rax]\n");
+    }
+    else if (type->size == 8) {
+        printf("  mov rax, [rax]\n");
+    }
+    else {
+        error("undefined type");
+    }
     printf("  push rax\n");
 }
 
-void generate_stack_value(Node *node) {
-    switch (node->category) {
-        case NODE_LOCAL_VALUE: {
-            printf("  mov rax, rbp\n");
-            printf("  sub rax, %d\n", node->var->offset);
-            printf("  push rax\n");
-            return;
-        }
-        case NODE_DEREFERENCE: {
-            generate(node->rhs);
-            return;
-        }
-        default:
-            error("local value or address expected, but got %s", node2str(node));
+void store(Type *type) {
+    printf("  pop rdi\n");
+    printf("  pop rax\n");
+    if (type->size == 4) {
+        printf("  mov [rax], edi\n");
     }
+    else if (type->size == 8) {
+        printf("  mov [rax], rdi\n");
+    }
+    else {
+        error("undefined type");
+    }
+    printf("  push rdi\n");
+}
+
+void generate_stack_value(Node *node) {
+    if (node->category == NODE_DEREFERENCE) {
+        generate(node->rhs);
+        return;
+    }
+    if (node->category == NODE_ACCESS_VARIABLE || node->category == NODE_DEFINE_VARIABLE) {
+        printf("  mov rax, rbp\n");
+        printf("  sub rax, %d\n", node->var->offset);
+        printf("  push rax\n");
+        return;
+    }
+    error("local variable or address expected, but got %s", node2str(node));
 }
 
 void generate(Node *node) {
@@ -40,17 +61,14 @@ void generate(Node *node) {
         return;
     }
     switch (node->category) {
-        case NODE_LOCAL_VALUE:
+        case NODE_ACCESS_VARIABLE:
             generate_stack_value(node);
-            load();
+            load(node->type);
             return;
         case NODE_ASSIGN:
             generate_stack_value(node->lhs);
             generate(node->rhs);
-            printf("  pop rdi\n");
-            printf("  pop rax\n");
-            printf("  mov [rax], rdi\n");
-            printf("  push rdi\n");
+            store(node->type);
             return;
         case NODE_RETURN: {
             generate(node->rhs);
@@ -133,10 +151,9 @@ void generate(Node *node) {
             }
             int arg_num = 0;
             for (Node *arg_node = node->lhs; arg_node != NULL; arg_node = arg_node->rhs) {
-                printf("  mov rax, rbp\n");
-                printf("  sub rax, %d\n", arg_node->lhs->var->offset);
-                printf("  mov [rax], %s\n", argument_register_8byte[arg_num]);
+                generate_stack_value(arg_node->lhs);
                 printf("  push %s\n", argument_register_8byte[arg_num]);
+                store(arg_node->lhs->type);
                 arg_num++;
             }
             generate(node->rhs);
@@ -149,7 +166,7 @@ void generate(Node *node) {
         }
         case NODE_DEREFERENCE: {
             generate(node->rhs);
-            load();
+            load(node->type);
             return;
         }
         case NODE_ADDRESS_OF: {
@@ -323,8 +340,8 @@ char *node2str(Node *node) {
             strcpy(nodestr, "(<=)");
             return nodestr;
         }
-        case NODE_LOCAL_VALUE: {
-            sprintf(nodestr, "local value offset : %d, size : %d", node->var->offset, node->type->size);
+        case NODE_ACCESS_VARIABLE: {
+            sprintf(nodestr, "local variable offset: %d, size: %d", node->var->offset, node->type->size);
             return nodestr;
         }
         case NODE_ASSIGN: {
@@ -376,7 +393,7 @@ char *node2str(Node *node) {
             return nodestr;
         }
         case NODE_DEFINE_VARIABLE: {
-            sprintf(nodestr, "define variable offset: %d", node->var->offset);
+            sprintf(nodestr, "define variable offset: %d, size: %d", node->var->offset, node->type->size);
             return nodestr;
         }
         default: {

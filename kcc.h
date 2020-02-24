@@ -31,6 +31,8 @@
 #define TYPE_INT "int"
 #define POINTER "*"
 #define SIZEOF "sizeof"
+#define BRACKETS_START "["
+#define BRACKETS_END "]"
 
 typedef enum {
     TOKEN_RESERVED,
@@ -115,6 +117,7 @@ struct Function {
 typedef enum {
     INTEGER_TYPE,
     POINTER_TYPE,
+    ARRAY_TYPE,
 } TypeCategory;
 
 struct Type {
@@ -125,8 +128,11 @@ struct Type {
 
 Type *int_type;
 Type *pointer_to(Type* base);
+Type *array_of(Type *base, int number);
 bool is_integer(Type *type);
 bool is_pointer(Type *type);
+bool is_array(Type *type);
+bool is_pointer_or_array(Type *type);
 
 Node *top_nodes[100];
 

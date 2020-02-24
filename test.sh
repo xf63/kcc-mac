@@ -89,4 +89,5 @@ echo "adress access OK"
 try 4 "int main() {int x; return sizeof(x);}"
 try 8 "int main() {int *y; return sizeof(y);}"
 echo "sizeof syntax OK"
+try 7 'int main() {int x[5];*x=2;*(x+1)=5;int *p;p=x; return *p+*(p+1);}'
 echo OK

@@ -18,11 +18,8 @@ void load(Type *type) {
     if (type->size == 4) {
         printf("  mov eax, [rax]\n");
     }
-    else if (type->size == 8) {
-        printf("  mov rax, [rax]\n");
-    }
     else {
-        error("undefined type");
+        printf("  mov rax, [rax]\n");
     }
     printf("  push rax\n");
 }
@@ -33,11 +30,8 @@ void store(Type *type) {
     if (type->size == 4) {
         printf("  mov [rax], edi\n");
     }
-    else if (type->size == 8) {
-        printf("  mov [rax], rdi\n");
-    }
     else {
-        error("undefined type");
+        printf("  mov [rax], rdi\n");
     }
     printf("  push rdi\n");
 }
@@ -63,7 +57,9 @@ void generate(Node *node) {
     switch (node->category) {
         case NODE_ACCESS_VARIABLE:
             generate_stack_value(node);
-            load(node->type);
+            if (!is_array(node->type)) {
+                load(node->type);
+            }
             return;
         case NODE_ASSIGN:
             generate_stack_value(node->lhs);
@@ -169,7 +165,9 @@ void generate(Node *node) {
         }
         case NODE_DEREFERENCE: {
             generate(node->rhs);
-            load(node->type);
+            if (!is_array(node->type)) {
+                load(node->type);
+            }
             return;
         }
         case NODE_ADDRESS_OF: {
@@ -200,7 +198,7 @@ void generate(Node *node) {
         }
         case NODE_ADD_POINTER: {
             printf("  pop rax\n");
-            printf("  mov rdi, %d\n", node->lhs->type->point_to->size); // rdi = size of left hand side
+            printf("  mov rdi, %d\n", node->rhs->type->size); // rdi = size of right hand side
             printf("  mul rdi\n"); // rax = rax * rdi
             printf("  pop rdi\n");
             printf("  add rdi, rax\n");
@@ -216,7 +214,7 @@ void generate(Node *node) {
         }
         case NODE_SUB_POINTER: {
             printf("  pop rax\n");
-            printf("  mov rdi, %d\n", node->lhs->type->point_to->size); // rdi = size of left hand side
+            printf("  mov rdi, %d\n", node->rhs->type->size); // rdi = size of right hand side
             printf("  mul rdi\n"); // rax = rax * rdi
             printf("  pop rdi\n");
             printf("  sub rdi, rax\n");

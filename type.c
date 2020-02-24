@@ -10,10 +10,26 @@ Type *pointer_to(Type *base) {
     return pointer;
 }
 
+Type *array_of(Type *base, int number) {
+    Type *array = calloc(1, sizeof(Type));
+    array->category = ARRAY_TYPE;
+    array->size = base->size * number;
+    array->point_to = base;
+    return array;
+}
+
 bool is_integer(Type *type) {
     return type->category == INTEGER_TYPE;
 }
 
 bool is_pointer(Type *type){
     return type->category == POINTER_TYPE;
+}
+
+bool is_array(Type *type){
+    return type->category == ARRAY_TYPE;
+}
+
+bool is_pointer_or_array(Type *type){
+    return is_pointer(type) || is_array(type);
 }

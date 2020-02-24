@@ -224,10 +224,10 @@ Node *cross_type_addition(Node* lhs, Node*rhs, Token *addition_token) {
     if (is_integer(lhs->type) && is_integer(rhs->type)) {
         return new_node(NODE_ADD_INTEGER, lhs, rhs);
     }
-    if (is_pointer(lhs->type) && is_integer(rhs->type)) {
+    if (is_pointer_or_array(lhs->type) && is_integer(rhs->type)) {
         return new_node(NODE_ADD_POINTER, lhs, rhs);
     }
-    if (is_integer(lhs->type) && is_pointer(rhs->type)) {
+    if (is_integer(lhs->type) && is_pointer_or_array(rhs->type)) {
         return new_node(NODE_ADD_POINTER, rhs, lhs);
     }
     error_at(addition_token->str, "addition between these type is not defined");
@@ -243,10 +243,10 @@ Node *cross_type_subtraction(Node* lhs, Node*rhs, Token *subtraction_token) {
     if (is_integer(lhs->type) && is_integer(rhs->type)) {
         return new_node(NODE_SUB_INTEGER, lhs, rhs);
     }
-    if (is_pointer(lhs->type) && is_integer(rhs->type)) {
+    if (is_pointer_or_array(lhs->type) && is_integer(rhs->type)) {
         return new_node(NODE_SUB_POINTER, lhs, rhs);
     }
-    if (is_pointer(lhs->type) && is_pointer(rhs->type)) {
+    if (is_pointer_or_array(lhs->type) && is_pointer_or_array(rhs->type)) {
         return new_node(NODE_DIFF_POINTER, rhs, lhs);
     }
     error_at(subtraction_token->str, "subtraction between these type is not defined");
@@ -327,9 +327,6 @@ Node *assign() {
         if (lhs->lhs->type == NULL || lhs->rhs->type == NULL) {
             error_at(assign_token->str, "type cannot be refined");
         }
-        if (lhs->lhs->type->size != lhs->rhs->type->size) {
-            error_at(assign_token->str, "type does not match");
-        }
     }
     return lhs;
 }
@@ -342,7 +339,7 @@ Node *expression() {
 }
 
 /**
- * definition = type ident
+ * definition = type ident ("[" number "]")?
 **/
 Node *definition() {
     Type *type = expect_type();
@@ -353,6 +350,10 @@ Node *definition() {
         strncpy(variable_name, var->name, var->len);
         variable_name[var->len] = '\0';
         error_at(var->name, "%s is already defined", variable_name);
+    }
+    if (consume_reserved(BRACKETS_START)) {
+        type = array_of(type, expect_number());
+        expect_reserved(BRACKETS_END);
     }
     Node *variable_definition_node = init_node(NODE_DEFINE_VARIABLE);
     var = calloc(1, sizeof(LocalVar));

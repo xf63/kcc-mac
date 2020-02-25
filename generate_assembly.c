@@ -5,12 +5,19 @@ char *node2str(Node *node);
 void generate(Node *node);
 char argument_register_8byte[10][10] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 char argument_register_4byte[10][10] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
-char func_name[10];
+char func_name[20];
+char var_name[20];
 
 char *get_func_name(Node *node) {
     strncpy(func_name, node->func->name, node->func->len);
     func_name[node->func->len] = '\0';
     return func_name;
+}
+
+char *get_var_name(Variable *var) {
+    strncpy(var_name, var->name, var->len);
+    var_name[var->len] = '\0';
+    return var_name;
 }
 
 void load(Type *type) {
@@ -41,10 +48,16 @@ void generate_stack_value(Node *node) {
         generate(node->rhs);
         return;
     }
-    if (node->category == NODE_ACCESS_VARIABLE || node->category == NODE_DEFINE_VARIABLE) {
-        printf("  mov rax, rbp\n");
-        printf("  sub rax, %d\n", node->var->offset);
-        printf("  push rax\n");
+    if (node->category == NODE_ACCESS_VARIABLE || node->category == NODE_DEFINE_VARIABLE) { // reach here as 'define variable' when argument
+        if (node->var->is_local) {
+            printf("  mov rax, rbp\n");
+            printf("  sub rax, %d\n", node->var->offset);
+            printf("  push rax\n");
+        }
+        else {
+            printf("  lea rax, [rip + _%s]\n", get_var_name(node->var));
+            printf("  push rax\n");
+        }
         return;
     }
     error("local variable or address expected, but got %s", node2str(node));
@@ -309,8 +322,17 @@ void generate_assembly(Node **top_nodes) {
     syntax_number = 0;
     // prologue
     printf(".intel_syntax noprefix\n");
-    printf(".section	__TEXT,__text,regular,pure_instructions\n");
     printf(".macosx_version_min 10, 10\n");
+    printf("\n");
+    //global variable
+    for (Variable *var = first_global_var; var != NULL; var = var->next) {
+        printf(".section	__DATA,__data\n");
+        printf(".globl	_%s\n", get_var_name(var));
+        printf("_%s:\n", get_var_name(var));
+        printf("  .zero %d\n", var->type->size);
+        printf("\n");
+    }
+    printf(".section	__TEXT,__text,regular,pure_instructions\n");
     printf(".globl	_main\n");
     // main
     for (int i = 0; top_nodes[i] != NULL; i++) {

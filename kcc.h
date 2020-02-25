@@ -43,7 +43,7 @@ typedef enum {
 
 typedef struct Token Token;
 typedef struct Node Node;
-typedef struct LocalVar LocalVar;
+typedef struct Variable Variable;
 typedef struct Function Function;
 typedef struct Type Type;
 
@@ -92,14 +92,15 @@ struct Node {
     Node *lhs;
     Node *rhs;
     int value;
-    LocalVar *var;
+    Variable *var;
     Function *func;
     Type *type;
 };
 
-struct LocalVar {
+struct Variable {
+    bool is_local;
     Type *type;
-    LocalVar *next;
+    Variable *next;
     char *name;
     int len;
     int offset;
@@ -109,8 +110,8 @@ struct Function {
     Type *type;
     char *name;
     int len;
-    LocalVar *first;
-    LocalVar *last;
+    Variable *first;
+    Variable *last;
     Function *next;
 };
 
@@ -135,8 +136,9 @@ bool is_array(Type *type);
 bool is_pointer_or_array(Type *type);
 
 Node *top_nodes[100];
-
 char *user_input;
+Variable *first_global_var;
+Variable *last_global_var;
 
 Function *first_function;
 Function *current_function;

@@ -61,8 +61,11 @@ Node *new_node(NodeCategory category, Node *lhs, Node *rhs) {
     Node *node = init_node(category);
     node->lhs = lhs;
     node->rhs = rhs;
-    if (lhs != NULL) {
-        node->type = lhs->type;
+    if (rhs != NULL) {
+        node->type = rhs->type;
+        if (lhs != NULL) {
+            node->type = lhs->type;
+        }
     }
     return node;
 }
@@ -74,7 +77,7 @@ Node *new_node_number(int number) {
     return node;
 }
 
-Function *checkFunctionDefined(Token *identifier_token) {
+Function *check_function(Token *identifier_token) {
     for (Function *func = first_function; func != NULL; func = func->next) {
         if (identifier_token->len == func->len && memcmp(identifier_token->str, func->name, func->len) == 0) {
             return func;
@@ -83,8 +86,17 @@ Function *checkFunctionDefined(Token *identifier_token) {
     return NULL;
 }
 
-LocalVar *checkVariableAllocated(Token *identifier_token) {
-    for (LocalVar *var = current_function->first; var != NULL; var = var->next) {
+Variable *check_local_variable(Token *identifier_token) {
+    for (Variable *var = current_function->first; var != NULL; var = var->next) {
+        if (identifier_token->len == var->len && memcmp(identifier_token->str, var->name, var->len) == 0) {
+            return var;
+        }
+    }
+    return NULL;
+}
+
+Variable *check_global_variable(Token *identifier_token) {
+    for (Variable *var = first_global_var; var != NULL; var = var->next) {
         if (identifier_token->len == var->len && memcmp(identifier_token->str, var->name, var->len) == 0) {
             return var;
         }
@@ -110,8 +122,11 @@ Token *expect_identifier() {
     return identifier_token;
 }
 
-Node *new_node_local_value(Token *identifier_token) {
-    LocalVar *var = checkVariableAllocated(identifier_token);
+Node *new_node_variable(Token *identifier_token) {
+    Variable *var = check_local_variable(identifier_token);
+    if (var == NULL) {
+        var = check_global_variable(identifier_token);
+    }
     if (var == NULL) {
         char variable_name[10];
         strncpy(variable_name, identifier_token->str, identifier_token->len);
@@ -141,6 +156,7 @@ Node *cross_type_addition(Node* lhs, Node*rhs, Token *addition_token) {
         return new_node(NODE_ADD_POINTER, rhs, lhs);
     }
     error_at(addition_token->str, "addition between these type is not defined");
+    return NULL;
 }
 
 Node *expression();
@@ -159,7 +175,7 @@ Node *primary() {
     if (identifier_token != NULL) {
         if (consume_reserved(PARENTHESES_START)) {
             Node *func_call_node = init_node(NODE_CALL_FUNCTION);
-            Function *called_func = checkFunctionDefined(identifier_token);
+            Function *called_func = check_function(identifier_token);
             if (called_func == NULL) {
                 error_at(identifier_token->str, "undefined function");
             }
@@ -181,7 +197,7 @@ Node *primary() {
             }
             return func_call_node;
         }
-        return new_node_local_value(identifier_token);
+        return new_node_variable(identifier_token);
     }
     return new_node_number(expect_number());
 }
@@ -352,12 +368,12 @@ Node *expression() {
 }
 
 /**
- * definition = type ident ("[" number "]")?
+ * local_variable = type ident ("[" number "]")?
 **/
-Node *definition() {
+Node *local_variable() {
     Type *type = expect_type();
     Token *identifier_token = expect_identifier();
-    LocalVar *var = checkVariableAllocated(identifier_token);
+    Variable *var = check_local_variable(identifier_token);
     if (var != NULL) {
         char variable_name[10];
         strncpy(variable_name, var->name, var->len);
@@ -369,10 +385,11 @@ Node *definition() {
         expect_reserved(BRACKETS_END);
     }
     Node *variable_definition_node = init_node(NODE_DEFINE_VARIABLE);
-    var = calloc(1, sizeof(LocalVar));
+    var = calloc(1, sizeof(Variable));
+    var->is_local = true;
+    var->type = type;
     var->name = identifier_token->str;
     var->len = identifier_token->len;
-    var->type = type;
     int default_offset = 0;
     if (current_function->last != NULL) {
         default_offset = current_function->last->offset;
@@ -454,7 +471,7 @@ Node *statement() {
         return brace_top_node;
     }
     if (peek_reserved(TYPE_INT)) {
-        lhs = definition();
+        lhs = local_variable();
         expect_reserved(END);
         return lhs;
     }
@@ -465,43 +482,69 @@ Node *statement() {
 
 
 /**
- * declaration = type ident "(" (definition ("," definition)*)? ")" statement
+ * global_declaration = type ident "(" (definition ("," definition)*)? ")" statement |
+ *                      global_variable ";"
 **/
-Node *declaration() {
+Node *global_declaration() {
     Type *type = expect_type();
-    Node *function_node = init_node(NODE_DEFINE_FUNCTION);
-    if (current_function == NULL) {
-        current_function = calloc(1, sizeof(Function));
-        first_function = current_function;        
-    }
-    else {
-        current_function->next = calloc(1, sizeof(Function));
-        current_function = current_function->next;
-    }
-    Token *function_token = expect_identifier();
-    current_function->type = type;
-    current_function->name = function_token->str;
-    current_function->len = function_token->len;
-    function_node->func = current_function;
-    function_node->type = type;
-    expect_reserved(PARENTHESES_START);
-    if (!consume_reserved(PARENTHESES_END)) {
-        Node *head = init_node(NODE_ARGUMENT);
-        head->lhs = definition();
-        Node *current = head;
-        while (consume_reserved(WITH)) {
-            current->rhs = init_node(NODE_ARGUMENT);
-            current = current->rhs;
-            current->lhs = definition();
+    Token *identifier_token = expect_identifier();
+    if (consume_reserved(PARENTHESES_START)) {
+        Node *node = init_node(NODE_DEFINE_FUNCTION);
+        if (current_function == NULL) {
+            current_function = calloc(1, sizeof(Function));
+            first_function = current_function;        
         }
-        function_node->lhs = head;
-        expect_reserved(PARENTHESES_END);
+        else {
+            current_function->next = calloc(1, sizeof(Function));
+            current_function = current_function->next;
+        }
+        current_function->type = type;
+        current_function->name = identifier_token->str;
+        current_function->len = identifier_token->len;
+        node->func = current_function;
+        node->type = type;
+        if (!consume_reserved(PARENTHESES_END)) {
+            Node *head = init_node(NODE_ARGUMENT);
+            head->lhs = local_variable();
+            Node *current = head;
+            while (consume_reserved(WITH)) {
+                current->rhs = init_node(NODE_ARGUMENT);
+                current = current->rhs;
+                current->lhs = local_variable();
+            }
+            node->lhs = head;
+            expect_reserved(PARENTHESES_END);
+        }
+        if (consume_reserved(END)) {
+            return node;
+        }
+        node->rhs = statement();
+        return node;
     }
-    if (consume_reserved(END)) {
-        return function_node;
+    while (consume_reserved(BRACKETS_START)) {
+        type = array_of(type, expect_number());
+        expect_reserved(BRACKETS_END);
     }
-    function_node->rhs = statement();
-    return function_node;
+    if (check_global_variable(identifier_token) != NULL) {
+        error_at(identifier_token->str, "global variable already defined");
+    }
+    Variable *var = calloc(1, sizeof(Variable));
+    var->is_local = false;
+    var->type = type;
+    var->name = identifier_token->str;
+    var->len = identifier_token->len;
+    if (last_global_var != NULL) {
+        last_global_var->next = var;
+    }
+    last_global_var = var;
+    if (first_global_var == NULL) {
+        first_global_var = last_global_var;
+    }
+    Node *variable_node = init_node(NODE_DEFINE_VARIABLE);
+    variable_node->type = type;
+    variable_node->var = var;
+    expect_reserved(END);
+    return variable_node;
 }
 
 /**
@@ -510,7 +553,7 @@ Node *declaration() {
 Node **program() {
     int num = 0;
     while (!is_at_eof()) {
-        top_nodes[num] = declaration();
+        top_nodes[num] = global_declaration();
         num++;
     }
     top_nodes[num] = NULL;

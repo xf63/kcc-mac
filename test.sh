@@ -92,4 +92,7 @@ try 40 'int main() {int a[2][5]; return sizeof(a);}'
 echo "sizeof syntax OK"
 try 7 'int main() {int x[5];*x=2;*(x+1)=5;int *p;p=x; return *p+*(p+1);}'
 try 10 'int main() {int x[5];x[0]=6;x[1]=4;int *p;p=x; return *p+*(p+1);}'
+echo "array access OK"
+try 12 'int a; int main() {a=12;return a;}'
+echo "global variable OK"
 echo OK

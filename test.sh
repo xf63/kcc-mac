@@ -86,8 +86,10 @@ try 3 'int main() {int x;int *y;x=3;y=&x;return *y;}'
 try 14 'int main() {int x;int y;int *z;x=14;y=5;z=&y+1;return *z;}'
 try 2 'int main() {int a;int *b; b=&a; *b=2; return a;}'
 echo "adress access OK"
-try 4 "int main() {int x; return sizeof(x);}"
-try 8 "int main() {int *y; return sizeof(y);}"
+try 4 'int main() {int x; return sizeof(x);}'
+try 8 'int main() {int *y; return sizeof(y);}'
+try 40 'int main() {int a[2][5]; return sizeof(a);}'
 echo "sizeof syntax OK"
 try 7 'int main() {int x[5];*x=2;*(x+1)=5;int *p;p=x; return *p+*(p+1);}'
+try 10 'int main() {int x[5];x[0]=6;x[1]=4;int *p;p=x; return *p+*(p+1);}'
 echo OK

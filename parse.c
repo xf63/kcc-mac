@@ -124,6 +124,25 @@ Node *new_node_local_value(Token *identifier_token) {
     return identifier_node;
 }
 
+Node *cross_type_addition(Node* lhs, Node*rhs, Token *addition_token) {
+    if (lhs->type == NULL) {
+        error_at(addition_token->str, "cannot refine type of left hand side");
+    }
+    if (rhs->type == NULL) {
+        error_at(addition_token->str, "cannot refine type of right hand side");
+    }
+    if (is_integer(lhs->type) && is_integer(rhs->type)) {
+        return new_node(NODE_ADD_INTEGER, lhs, rhs);
+    }
+    if (is_pointer_or_array(lhs->type) && is_integer(rhs->type)) {
+        return new_node(NODE_ADD_POINTER, lhs, rhs);
+    }
+    if (is_integer(lhs->type) && is_pointer_or_array(rhs->type)) {
+        return new_node(NODE_ADD_POINTER, rhs, lhs);
+    }
+    error_at(addition_token->str, "addition between these type is not defined");
+}
+
 Node *expression();
 
 /**
@@ -168,16 +187,29 @@ Node *primary() {
 }
 
 /**
- * unary = ("+" | "-")? primary |
+ * array = primary ("[" number "]")?
+**/
+Node *array() {
+    Node *node =  primary();
+    while (consume_reserved(BRACKETS_START)) {
+        node = new_node(NODE_DEREFERENCE, NULL, new_node(NODE_ADD_POINTER, node, new_node_number(expect_number())));
+        node->type = node->rhs->type->point_to;
+        expect_reserved(BRACKETS_END);
+    }
+    return node;
+}
+
+/**
+ * unary = ("+" | "-")? array |
  *          ("*" | "&") unary |
  *          "sizeof" unary
 **/
 Node *unary() {
     if (consume_reserved(PLUS)) {
-        return primary();
+        return array();
     }
     if (consume_reserved(MINUS)) {
-        return new_node(NODE_SUB_INTEGER, new_node_number(0), primary());
+        return new_node(NODE_SUB_INTEGER, new_node_number(0), array());
     }
     if (consume_reserved(DEREFERENCE)) {
         Node *deref_node = new_node(NODE_DEREFERENCE, NULL, unary());
@@ -192,7 +224,7 @@ Node *unary() {
     if (consume_reserved(SIZEOF)) {
         return new_node_number(unary()->type->size);
     }
-    return primary();
+    return array();
 }
 
 /**
@@ -212,25 +244,6 @@ Node *multiplicative() {
         return lhs;
     }
     
-}
-
-Node *cross_type_addition(Node* lhs, Node*rhs, Token *addition_token) {
-    if (lhs->type == NULL) {
-        error_at(addition_token->str, "cannot refine type of left hand side");
-    }
-    if (rhs->type == NULL) {
-        error_at(addition_token->str, "cannot refine type of right hand side");
-    }
-    if (is_integer(lhs->type) && is_integer(rhs->type)) {
-        return new_node(NODE_ADD_INTEGER, lhs, rhs);
-    }
-    if (is_pointer_or_array(lhs->type) && is_integer(rhs->type)) {
-        return new_node(NODE_ADD_POINTER, lhs, rhs);
-    }
-    if (is_integer(lhs->type) && is_pointer_or_array(rhs->type)) {
-        return new_node(NODE_ADD_POINTER, rhs, lhs);
-    }
-    error_at(addition_token->str, "addition between these type is not defined");
 }
 
 Node *cross_type_subtraction(Node* lhs, Node*rhs, Token *subtraction_token) {
@@ -320,15 +333,15 @@ Node *equality() {
  * assign = equality ("=" assign)?
 **/
 Node *assign() {
-    Node *lhs = equality();
+    Node *node = equality();
     Token *assign_token = token;
     if (consume_reserved(ASSIGN)) {
-        lhs = new_node(NODE_ASSIGN, lhs, assign());
-        if (lhs->lhs->type == NULL || lhs->rhs->type == NULL) {
+        node = new_node(NODE_ASSIGN, node, assign());
+        if (node->lhs->type == NULL || node->rhs->type == NULL) {
             error_at(assign_token->str, "type cannot be refined");
         }
     }
-    return lhs;
+    return node;
 }
 
 /**
@@ -351,7 +364,7 @@ Node *definition() {
         variable_name[var->len] = '\0';
         error_at(var->name, "%s is already defined", variable_name);
     }
-    if (consume_reserved(BRACKETS_START)) {
+    while (consume_reserved(BRACKETS_START)) {
         type = array_of(type, expect_number());
         expect_reserved(BRACKETS_END);
     }

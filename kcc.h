@@ -28,7 +28,8 @@
 #define WITH ","
 #define DEREFERENCE "*"
 #define ADDRESS_OF "&"
-#define TYPE_INT "int"
+#define INT_KEYWORD "int"
+#define CHAR_KEYWORD "char"
 #define POINTER "*"
 #define SIZEOF "sizeof"
 #define BRACKETS_START "["
@@ -117,6 +118,7 @@ struct Function {
 
 typedef enum {
     INTEGER_TYPE,
+    CHAR_TYPE,
     POINTER_TYPE,
     ARRAY_TYPE,
 } TypeCategory;
@@ -128,12 +130,15 @@ struct Type {
 };
 
 Type *int_type;
+Type *char_type;
 Type *pointer_to(Type* base);
 Type *array_of(Type *base, int number);
 bool is_integer(Type *type);
+bool is_character(Type *type);
 bool is_pointer(Type *type);
 bool is_array(Type *type);
 bool is_pointer_or_array(Type *type);
+bool is_character_or_integer(Type *type);
 
 Node *top_nodes[100];
 char *user_input;

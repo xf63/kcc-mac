@@ -95,4 +95,7 @@ try 10 'int main() {int x[5];x[0]=6;x[1]=4;int *p;p=x; return *p+*(p+1);}'
 echo "array access OK"
 try 12 'int a; int main() {a=12;return a;}'
 echo "global variable OK"
+try 1 'int main() {char c; return sizeof(c);}'
+try 3 'int main() {char c[4];c[0]=-1;int i;i=4;return i+c[0];}' 
+echo "char type OK"
 echo OK

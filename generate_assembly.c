@@ -22,7 +22,10 @@ char *get_var_name(Variable *var) {
 
 void load(Type *type) {
     printf("  pop rax\n");
-    if (type->size == 4) {
+    if (type->size == 1) {
+        printf("  movzx eax, BYTE PTR [rax]\n");
+    }
+    else if (type->size == 4) {
         printf("  mov eax, [rax]\n");
     }
     else {
@@ -34,7 +37,10 @@ void load(Type *type) {
 void store(Type *type) {
     printf("  pop rdi\n");
     printf("  pop rax\n");
-    if (type->size == 4) {
+    if (type->size == 1) {
+        printf("  mov [rax], dil\n");
+    }
+    else if (type->size == 4) {
         printf("  mov [rax], edi\n");
     }
     else {
@@ -211,7 +217,7 @@ void generate(Node *node) {
         }
         case NODE_ADD_POINTER: {
             printf("  pop rax\n");
-            printf("  mov rdi, %d\n", node->rhs->type->size); // rdi = size of right hand side
+            printf("  mov rdi, %d\n", node->type->point_to->size); // rdi = size of right hand side
             printf("  mul rdi\n"); // rax = rax * rdi
             printf("  pop rdi\n");
             printf("  add rdi, rax\n");
@@ -227,7 +233,7 @@ void generate(Node *node) {
         }
         case NODE_SUB_POINTER: {
             printf("  pop rax\n");
-            printf("  mov rdi, %d\n", node->rhs->type->size); // rdi = size of right hand side
+            printf("  mov rdi, %d\n", node->type->point_to->size); // rdi = size of right hand side
             printf("  mul rdi\n"); // rax = rax * rdi
             printf("  pop rdi\n");
             printf("  sub rdi, rax\n");
@@ -238,7 +244,7 @@ void generate(Node *node) {
             printf("  pop rdi\n");
             printf("  pop rax\n");
             printf("  sub rax, rdi\n");
-            printf("  mov rdi, %d\n", node->lhs->type->size); // rdi = size of left hand side
+            printf("  mov rdi, %d\n", node->type->size); // rdi = size of left hand side
             printf("  cqo\n");
             printf("  idiv rdi\n");
             printf("  push rax\n");

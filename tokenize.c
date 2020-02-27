@@ -61,13 +61,13 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (memcmp(p, ELSE, 4) == 0 && !is_alphabet_or_number(p[4])) {
+        if ((memcmp(p, ELSE, 4) == 0 || memcmp(p, CHAR_KEYWORD, 4)==0) && !is_alphabet_or_number(p[4])) {
             current = new_token(TOKEN_RESERVED, current, p, 4);
             p = p + 4;
             continue;
         }
 
-        if ((memcmp(p, FOR, 3) == 0 || memcmp(p, TYPE_INT, 3) == 0) && !is_alphabet_or_number(p[3])) {
+        if ((memcmp(p, FOR, 3) == 0 || memcmp(p, INT_KEYWORD, 3) == 0) && !is_alphabet_or_number(p[3])) {
             current = new_token(TOKEN_RESERVED, current, p, 3);
             p = p + 3;
             continue;

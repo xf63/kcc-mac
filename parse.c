@@ -34,8 +34,16 @@ int expect_number() {
 }
 
 Type *expect_type() {
-    expect_reserved(TYPE_INT);
-    Type *type = int_type;
+    if (!peek_reserved(INT_KEYWORD) && !peek_reserved(CHAR_KEYWORD)) {
+        error_at(token->str, "type expected");
+    }
+    Type *type;
+    if (consume_reserved(INT_KEYWORD)) {
+        type = int_type;
+    }
+    if (consume_reserved(CHAR_KEYWORD)) {
+        type = char_type;
+    }
     while (consume_reserved(POINTER)) {
         type = pointer_to(type);
     }
@@ -146,7 +154,7 @@ Node *cross_type_addition(Node* lhs, Node*rhs, Token *addition_token) {
     if (rhs->type == NULL) {
         error_at(addition_token->str, "cannot refine type of right hand side");
     }
-    if (is_integer(lhs->type) && is_integer(rhs->type)) {
+    if (is_character_or_integer(lhs->type) && is_character_or_integer(rhs->type)) {
         return new_node(NODE_ADD_INTEGER, lhs, rhs);
     }
     if (is_pointer_or_array(lhs->type) && is_integer(rhs->type)) {
@@ -156,6 +164,26 @@ Node *cross_type_addition(Node* lhs, Node*rhs, Token *addition_token) {
         return new_node(NODE_ADD_POINTER, rhs, lhs);
     }
     error_at(addition_token->str, "addition between these type is not defined");
+    return NULL;
+}
+
+Node *cross_type_subtraction(Node* lhs, Node*rhs, Token *subtraction_token) {
+    if (lhs->type == NULL) {
+        error_at(subtraction_token->str, "cannot refine type of left hand side");
+    }
+    if (rhs->type == NULL) {
+        error_at(subtraction_token->str, "cannot refine type of right hand side");
+    }
+    if (is_character_or_integer(lhs->type) && is_character_or_integer(rhs->type)) {
+        return new_node(NODE_SUB_INTEGER, lhs, rhs);
+    }
+    if (is_pointer_or_array(lhs->type) && is_integer(rhs->type)) {
+        return new_node(NODE_SUB_POINTER, lhs, rhs);
+    }
+    if (is_pointer_or_array(lhs->type) && is_pointer_or_array(rhs->type)) {
+        return new_node(NODE_DIFF_POINTER, rhs, lhs);
+    }
+    error_at(subtraction_token->str, "subtraction between these type is not defined");
     return NULL;
 }
 
@@ -262,26 +290,6 @@ Node *multiplicative() {
     
 }
 
-Node *cross_type_subtraction(Node* lhs, Node*rhs, Token *subtraction_token) {
-    if (lhs->type == NULL) {
-        error_at(subtraction_token->str, "cannot refine type of left hand side");
-    }
-    if (rhs->type == NULL) {
-        error_at(subtraction_token->str, "cannot refine type of right hand side");
-    }
-    if (is_integer(lhs->type) && is_integer(rhs->type)) {
-        return new_node(NODE_SUB_INTEGER, lhs, rhs);
-    }
-    if (is_pointer_or_array(lhs->type) && is_integer(rhs->type)) {
-        return new_node(NODE_SUB_POINTER, lhs, rhs);
-    }
-    if (is_pointer_or_array(lhs->type) && is_pointer_or_array(rhs->type)) {
-        return new_node(NODE_DIFF_POINTER, rhs, lhs);
-    }
-    error_at(subtraction_token->str, "subtraction between these type is not defined");
-    return NULL;
-}
-
 /**
  * additive = multiplicative ("+" multiplicative | "-" multiplicative)*
 **/
@@ -294,7 +302,7 @@ Node *additive() {
             continue;
         }
         if (consume_reserved(MINUS)) {
-            lhs = new_node(NODE_SUB_INTEGER, lhs, multiplicative());
+            lhs = cross_type_subtraction(lhs, multiplicative(), operator_token);
             continue;
         }
         return lhs;
@@ -470,7 +478,7 @@ Node *statement() {
         }
         return brace_top_node;
     }
-    if (peek_reserved(TYPE_INT)) {
+    if (peek_reserved(INT_KEYWORD) || peek_reserved(CHAR_KEYWORD)) {
         lhs = local_variable();
         expect_reserved(END);
         return lhs;

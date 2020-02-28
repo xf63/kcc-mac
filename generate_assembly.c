@@ -5,19 +5,21 @@ char *node2str(Node *node);
 void generate(Node *node);
 char argument_register_8byte[10][10] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 char argument_register_4byte[10][10] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
-char func_name[20];
-char var_name[20];
+char output_string[100];
+
+
+char *to_string(char *pointer, int len) {
+    strncpy(output_string, pointer, len);
+    output_string[len] = '\0';
+    return output_string;
+}
 
 char *get_func_name(Node *node) {
-    strncpy(func_name, node->func->name, node->func->len);
-    func_name[node->func->len] = '\0';
-    return func_name;
+    return to_string(node->func->name, node->func->len);
 }
 
 char *get_var_name(Variable *var) {
-    strncpy(var_name, var->name, var->len);
-    var_name[var->len] = '\0';
-    return var_name;
+    return to_string(var->name, var->len);
 }
 
 void load(Type *type) {
@@ -196,6 +198,11 @@ void generate(Node *node) {
         case NODE_DEFINE_VARIABLE: {
             return;
         }
+        case NODE_STRING: {
+            printf("  lea rax, [rip + L_.str%d]\n", node->str->num);
+            printf("  push rax\n");
+            return;
+        }
         default:
             break;
     }
@@ -330,7 +337,15 @@ void generate_assembly(Node **top_nodes) {
     printf(".intel_syntax noprefix\n");
     printf(".macosx_version_min 10, 10\n");
     printf("\n");
-    //global variable
+
+    // string
+    for (String *str = first_string; str != NULL; str = str->next) {
+        printf(".section	__TEXT,__cstring,cstring_literals\n");
+        printf("L_.str%d:\n", str->num);
+        printf("  .asciz \"%s\"\n", to_string(str->content, str->len));
+    }
+
+    // global variable
     for (Variable *var = first_global_var; var != NULL; var = var->next) {
         printf(".section	__DATA,__data\n");
         printf(".globl	_%s\n", get_var_name(var));
@@ -463,6 +478,10 @@ char *node2str(Node *node) {
         }
         case NODE_DEFINE_VARIABLE: {
             sprintf(nodestr, "define variable offset: %d, size: %d", node->var->offset, node->type->size);
+            return nodestr;
+        }
+        case NODE_STRING: {
+            sprintf(nodestr, "string: %s", to_string(node->str->content, node->str->len));
             return nodestr;
         }
         default: {

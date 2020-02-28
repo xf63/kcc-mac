@@ -49,6 +49,19 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (prefix_match(p, STRING_QUOTE)) {
+            char *string_start = p;
+            int len = 2;
+            p++;
+            while (!prefix_match(p, STRING_QUOTE)) {
+                p++;
+                len++;
+            }
+            p++;
+            current = new_token(TOKEN_STRING, current, string_start, len);
+            continue;
+        }
+
         if ((memcmp(p, RETURN, 6) == 0 || memcmp(p, SIZEOF, 6) == 0) && !is_alphabet_or_number(p[6])) {
             current = new_token(TOKEN_RESERVED, current, p, 6);
             p = p + 6;
@@ -129,7 +142,7 @@ void show_tokens(Token *head) {
             fprintf(stderr, "num:'%d' ", tok->val);
         }
         else {
-            char tokenstr[10];
+            char tokenstr[30];
             strncpy(tokenstr, tok->str, tok->len);
             tokenstr[tok->len] = '\0';
             char *token_category;
@@ -138,6 +151,9 @@ void show_tokens(Token *head) {
             }
             else if (tok->category == TOKEN_IDENTIFIER) {
                 token_category = "IDNT:";
+            }
+            else if (tok->category == TOKEN_STRING) {
+                token_category = "STRG:";
             }
             fprintf(stderr, "%s'%s' ", token_category, tokenstr);
         }

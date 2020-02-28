@@ -98,4 +98,6 @@ echo "global variable OK"
 try 1 'int main() {char c; return sizeof(c);}'
 try 3 'int main() {char c[4];c[0]=-1;int i;i=4;return i+c[0];}' 
 echo "char type OK"
+try 4 'int main() {return sizeof("abc");}'
+try 97 'int main() {char *s; s = "abcde"; return s[0];}'
 echo OK

@@ -6,3 +6,4 @@ kcc
 *.dSYM/*
 .vscode
 c_cpp_properties.json
+kcc.dSYM/*

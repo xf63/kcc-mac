@@ -34,12 +34,14 @@
 #define SIZEOF "sizeof"
 #define BRACKETS_START "["
 #define BRACKETS_END "]"
+#define STRING_QUOTE "\""
 
 typedef enum {
     TOKEN_RESERVED,
     TOKEN_NUMBER,
     TOKEN_IDENTIFIER,
     TOKEN_EOF,
+    TOKEN_STRING,
 } TokenCategory;
 
 typedef struct Token Token;
@@ -47,6 +49,7 @@ typedef struct Node Node;
 typedef struct Variable Variable;
 typedef struct Function Function;
 typedef struct Type Type;
+typedef struct String String;
 
 struct Token {
     TokenCategory category;
@@ -86,6 +89,7 @@ typedef enum {
     NODE_DEREFERENCE,
     NODE_ADDRESS_OF,
     NODE_DEFINE_VARIABLE,
+    NODE_STRING,
 } NodeCategory;
 
 struct Node {
@@ -96,6 +100,7 @@ struct Node {
     Variable *var;
     Function *func;
     Type *type;
+    String *str;
 };
 
 struct Variable {
@@ -129,6 +134,13 @@ struct Type {
     Type *point_to;
 };
 
+struct String {
+    int num;
+    char *content;
+    int len;
+    String *next;
+};
+
 Type *int_type;
 Type *char_type;
 Type *pointer_to(Type* base);
@@ -147,6 +159,9 @@ Variable *last_global_var;
 
 Function *first_function;
 Function *current_function;
+
+String *first_string;
+String *current_string;
 
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);

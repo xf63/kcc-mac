@@ -1,3 +1,4 @@
+#include <stdio.h>
 int return10() {return 10;}
 int add1(int arg0) {return 1+arg0;}
 int add2(int arg0, int arg1) {return 2+arg0+arg1;}

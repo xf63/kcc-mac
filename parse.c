@@ -191,7 +191,8 @@ Node *expression();
 
 /**
  * primary = [0-9]* | "(" expression ")" |
- *          ident ("(" (expression ("," expression)*)? ")")?
+ *          ident ("(" (expression ("," expression)*)? ")")? |
+ *          """ string """
 **/
 Node *primary() {
     if (consume_reserved(PARENTHESES_START)) {
@@ -226,6 +227,25 @@ Node *primary() {
             return func_call_node;
         }
         return new_node_variable(identifier_token);
+    }
+    if (token->category == TOKEN_STRING) {
+        String *str = calloc(1, sizeof(String));
+        str->content = token->str + 1;
+        str->len = token->len - 2;
+        if (current_string != NULL) {
+            current_string->next = str;
+            str->num = current_string->num + 1;
+        }
+        current_string = str;
+        if (first_string == NULL) {
+            str->num = 0;
+            first_string = str;
+        }
+        Node *str_node = init_node(NODE_STRING);
+        str_node->type = array_of(char_type, str->len + 1);
+        str_node->str = str;
+        token = token->next;
+        return str_node;
     }
     return new_node_number(expect_number());
 }

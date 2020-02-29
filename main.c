@@ -5,9 +5,10 @@ char *read_file(char *path);
 
 int main(int argc, char **argv) {
     int input_index = 1;
-    bool direct_input = false;
     bool show_token_list = false;
     bool show_parse_tree = false;
+    direct_input = false;
+    
     int option;
     while ((option = getopt(argc, argv, "dtp")) != -1) {
         switch (option) {
@@ -34,7 +35,8 @@ int main(int argc, char **argv) {
         user_input = argv[argc - 1];
     }
     else {
-        user_input = read_file(argv[argc - 1]);
+        file_name = argv[argc - 1];
+        user_input = read_file(file_name);
     }
     token = tokenize(user_input);
     if (show_token_list) {

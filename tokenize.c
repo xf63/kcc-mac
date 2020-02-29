@@ -9,8 +9,30 @@ void error(char *fmt, ...) {
 }
 
 void error_at(char *loc, char *fmt, ...) {
-    int error_position = loc - user_input; //when loc is pointer to the specific location of code, position is available by subtraction.
-    fprintf(stderr, "%s\n", user_input);
+    int error_position;
+    if (direct_input) {
+        error_position = loc - user_input; //when loc is pointer to the specific location of code, position is available by subtraction.
+        fprintf(stderr, "%s\n", user_input);
+    }
+    else {
+        char *line_start = loc;
+        while (user_input < line_start && line_start[-1] != '\n') {
+            line_start--;
+        }
+        char *line_end = loc;
+        while (*line_end != '\n') {
+            line_end++;
+        }
+        int line_num = 1;
+        for (char *p = user_input; p < line_start; p++) {
+            if (*p == '\n') {
+                line_num++;
+            }
+        }
+        int indent = fprintf(stderr, "%s:%d: ", file_name, line_num);
+        fprintf(stderr, "%.*s\n", (int)(line_end - line_start), line_start);
+        error_position = loc - line_start + indent;
+    }
     fprintf(stderr, "%*s", error_position, "");
     fprintf(stderr, "^ ");
 

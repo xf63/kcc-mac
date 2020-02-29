@@ -154,7 +154,10 @@ bool is_pointer_or_array(Type *type);
 bool is_character_or_integer(Type *type);
 
 Node *top_nodes[100];
+char *file_name;
 char *user_input;
+bool direct_input;
+
 Variable *first_global_var;
 Variable *last_global_var;
 

@@ -13,7 +13,7 @@ try() {
     input="$2"
     with_funcs="$3"
 
-    ./kcc "$input" > tmp.s
+    ./kcc -d "$input" > tmp.s
     if [ "$with_funcs" = "cf" ]; then
         build_binary_with_cfuncs
     else

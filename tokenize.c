@@ -44,7 +44,7 @@ Token *tokenize(char *p) {
     Token *current = &head;
 
     while (*p) {
-        if (*p == ' ') {
+        if (*p == ' ' || *p == '\n') {
             p++;
             continue;
         }

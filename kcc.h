@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 
 #define PLUS "+"
 #define MINUS "-"

@@ -164,7 +164,7 @@ void show_tokens(Token *head) {
             fprintf(stderr, "num:'%d' ", tok->val);
         }
         else {
-            char tokenstr[30];
+            char tokenstr[100];
             strncpy(tokenstr, tok->str, tok->len);
             tokenstr[tok->len] = '\0';
             char *token_category;

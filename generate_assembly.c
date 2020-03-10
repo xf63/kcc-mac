@@ -150,11 +150,26 @@ void generate(Node *node) {
         case NODE_CALL_FUNCTION: {
             int arg_num = 0;
             for (Node *arg_node = node->lhs; arg_node != NULL; arg_node = arg_node->rhs) {
-                generate(arg_node->lhs);
-                printf("  pop %s\n", argument_register_8byte[arg_num]);
+                generate(arg_node->lhs);                
                 arg_num++;
             }
+            for (int i = arg_num - 1; i >= 0; i--) {
+                printf("  pop %s\n", argument_register_8byte[i]);
+            }
+            int call_syntax_number = syntax_number;
+            syntax_number++;
+            printf("  mov rax, rsp\n");
+            printf("  and rax, 15\n");
+            printf("  jnz Lcall%03d\n", call_syntax_number);
+            printf("  mov al, 0\n");
             printf("  call _%s\n", get_func_name(node));
+            printf("  jmp Lend%03d\n", call_syntax_number);
+            printf("Lcall%03d:\n", call_syntax_number);
+            printf("  sub rsp, 8\n");
+            printf("  mov al, 0\n");
+            printf("  call _%s\n", get_func_name(node));
+            printf("  add rsp, 8\n");
+            printf("Lend%03d:\n", call_syntax_number);
             printf("  push rax\n");
             return;
         }
@@ -167,7 +182,8 @@ void generate(Node *node) {
             printf("  mov rbp, rsp\n");
             // local value stack allocation
             if (node->func->last != NULL) {
-                printf("  sub rsp, %d\n", node->func->last->offset);
+                int offset_8byte_aligned = 8 * (1 + (node->func->last->offset / 8));
+                printf("  sub rsp, %d\n", offset_8byte_aligned);
             }
             int arg_num = 0;
             for (Node *arg_node = node->lhs; arg_node != NULL; arg_node = arg_node->rhs) {
@@ -339,8 +355,10 @@ void generate_assembly(Node **top_nodes) {
     printf("\n");
 
     // string
-    for (String *str = first_string; str != NULL; str = str->next) {
+    if (first_string != NULL) {
         printf(".section	__TEXT,__cstring,cstring_literals\n");
+    }
+    for (String *str = first_string; str != NULL; str = str->next) {
         printf("L_.str%d:\n", str->num);
         printf("  .asciz \"%s\"\n", to_string(str->content, str->len));
     }

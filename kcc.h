@@ -36,6 +36,7 @@
 #define BRACKETS_START "["
 #define BRACKETS_END "]"
 #define STRING_QUOTE "\""
+#define LINE_COMMENT "//"
 
 typedef enum {
     TOKEN_RESERVED,

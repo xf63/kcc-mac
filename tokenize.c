@@ -71,6 +71,14 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (memcmp(p, LINE_COMMENT, 2) == 0) {
+            p += 2;
+            while (*p != '\n') {
+                p++;
+            }
+            continue;
+        }
+
         if (prefix_match(p, STRING_QUOTE)) {
             char *string_start = p;
             int len = 2;

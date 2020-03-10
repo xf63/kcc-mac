@@ -10,5 +10,6 @@ int assert(int expected, int actual) {
 }
 
 int main() {
+    // line comment
     return assert(5, 2+3);
 }

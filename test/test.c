@@ -1,5 +1,8 @@
 int printf(char* str, int a, int b);
 
+/*
+block comment!
+*/
 int assert(int expected, int actual) {
     if (expected != actual) {
         printf("%d expected but got %d why?\n", expected, actual);

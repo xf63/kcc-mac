@@ -79,6 +79,15 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        if (memcmp(p, BLOCK_COMMENT_START, 2) == 0) {
+            char *comment_end = strstr(p + 2, BLOCK_COMMENT_END);
+            if (comment_end == NULL) {
+                error_at(p, "comment block is not properly closed");
+            }
+            p = comment_end + 2;
+            continue;
+        }
+
         if (prefix_match(p, STRING_QUOTE)) {
             char *string_start = p;
             int len = 2;

@@ -66,15 +66,15 @@ try 23 'int main() {int foo; int bar; foo = 11; bar = 12; foo+bar;}'
 echo "local variable OK"
 try 3 'int main() {return 3; return 2;}'
 echo "return syntax OK"
-try 10 'int main() {int a;a=0; if (a==0) return 10; return 11;}'
+try 10 'int main() {int a=0; if (a==0) return 10; return 11;}'
 echo "if syntax OK"
-try 11 'int main() {int a;a=0; if (a==1) return 10; else return 11; return 12;}'
+try 11 'int main() {int a=0; if (a==1) return 10; else return 11; return 12;}'
 echo "if-else syntax OK"
-try 6 'int main() {int a;a=0; while (a<5) a = a + 2; return a;}'
+try 6 'int main() {int a=0; while (a<5) a = a + 2; return a;}'
 echo "while syntax OK"
-try 5 'int main() {int loop;loop=0;int i;for(i=0;i<5;i=i+1) loop=loop+1; return loop;}'
+try 5 'int main() {int loop=0;int i;for(i=0;i<5;i=i+1) loop=loop+1; return loop;}'
 echo "for syntax OK"
-try 15 'int main() {int l1;int l2;l1=0;l2=0;int a;for (a=0; a<5; a=a+1) {l1=l1+1;l2=l2+2;} return l1+l2;}'
+try 15 'int main() {int l1=0;int l2=0;int a;for (a=0; a<5; a=a+1) {l1=l1+1;l2=l2+2;} return l1+l2;}'
 echo "braces block OK"
 try 11 'int return10(); int main() {return10() + 1;}' cf
 try 28 'int add6(); int main() {7 + add6(5,4,3,2,1,0);}' cf
@@ -99,5 +99,6 @@ try 1 'int main() {char c; return sizeof(c);}'
 try 3 'int main() {char c[4];c[0]=-1;int i;i=4;return i+c[0];}' 
 echo "char type OK"
 try 4 'int main() {return sizeof("abc");}'
-try 97 'int main() {char *s; s = "abcde"; return s[0];}'
+try 97 'int main() {char *s = "abcde"; return s[0];}'
+echo "string OK"
 echo OK

@@ -212,6 +212,9 @@ void generate(Node *node) {
             return;
         }
         case NODE_DEFINE_VARIABLE: {
+            if (node->rhs != NULL) {
+                generate(node->rhs);
+            }
             return;
         }
         case NODE_STRING: {

@@ -396,7 +396,7 @@ Node *expression() {
 }
 
 /**
- * local_variable = type ident ("[" number "]")?
+ * local_variable = type ident ("[" number "]")* ("=" equality)?
 **/
 Node *local_variable() {
     Type *type = expect_type();
@@ -430,6 +430,10 @@ Node *local_variable() {
     }
     variable_definition_node->var = var;
     variable_definition_node->type = var->type;
+    if (!consume_reserved(ASSIGN)) {
+        return variable_definition_node;
+    }
+    variable_definition_node->rhs = new_node(NODE_ASSIGN, new_node_variable(identifier_token), equality());
     return variable_definition_node;
 }
 
@@ -440,7 +444,7 @@ Node *local_variable() {
  *              "while" "(" equality ")" statement |
  *              "for" "(" (assign)? ";" (equality)? ";" (assign)? ")" statement |
  *              "{" statement* "}" |
- *              definition ";"
+ *              local_variable ";"
 **/
 Node *statement() {
     Node *lhs;
@@ -511,7 +515,7 @@ Node *statement() {
 
 /**
  * global_declaration = type ident "(" (definition ("," definition)*)? ")" statement |
- *                      global_variable ";"
+ *                      type ident ("[" [0-9]* "]")* ";"
 **/
 Node *global_declaration() {
     Type *type = expect_type();
@@ -576,7 +580,7 @@ Node *global_declaration() {
 }
 
 /**
- * program = declaration*
+ * program = global_declaration*
 **/
 Node **program() {
     int num = 0;
